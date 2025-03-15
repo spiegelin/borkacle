@@ -156,7 +156,7 @@ export function SprintBoard({ sprintId, sprintName, sprintDateRange }: SprintBoa
   const getTypeIcon = (type: Task["type"]) => {
     switch (type) {
       case "bug":
-        return <AlertCircle className="h-3 w-3 text-[#F7630C]" />
+        return <AlertCircle className="h-3 w-3 text-[#C74634]" />
       case "task":
         return <CheckCircle2 className="h-3 w-3 text-[#3A3A3A]" />
       case "story":
@@ -173,7 +173,7 @@ export function SprintBoard({ sprintId, sprintName, sprintDateRange }: SprintBoa
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="lucide lucide-layers text-[#F7630C]"
+            className="lucide lucide-layers text-[#C74634]"
           >
             <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" />
             <path d="m22 12.5-8.58 3.91a2 2 0 0 1-1.66 0L2.6 12.5" />
@@ -194,7 +194,7 @@ export function SprintBoard({ sprintId, sprintName, sprintDateRange }: SprintBoa
           <Button variant="outline" className="border-gray-200">
             Filter
           </Button>
-          <Button className="bg-[#F7630C] hover:bg-[#E25A00]">
+          <Button className="bg-[#C74634] hover:bg-[#b03d2e]">
             <Plus className="h-4 w-4 mr-1" /> Add Task
           </Button>
         </div>

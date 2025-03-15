@@ -1,14 +1,15 @@
 "use client"
 
-import { useState } from "react"
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd"
+import { useEffect, useState } from "react"
+import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd"
 import { Plus, MoreHorizontal, AlertCircle, CheckCircle2, Clock, ArrowUpRight } from "lucide-react"
+import Link from "next/link"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { CreateTaskDialog } from "@/components/create-task-dialog"
-import Link from "next/link"
 
 interface Task {
   id: string
@@ -23,97 +24,119 @@ interface Task {
   }
 }
 
+interface Column {
+  id: string
+  title: string
+  tasks: Task[]
+}
+
+interface Columns {
+  [key: string]: Column
+}
+
+const defaultColumns: Columns = {
+  todo: {
+    id: "todo",
+    title: "To Do",
+    tasks: [
+      { id: "ORA-2345", title: "Initial prototype for each microservice", type: "task", priority: "high", status: "todo" },
+      {
+        id: "ORA-2346",
+        title: "Resource Planning",
+        type: "story",
+        priority: "low",
+        status: "todo",
+        assignee: { name: "John Doe", initials: "JD" },
+      },
+      { id: "ORA-2347", title: "Requirements Elicitation", type: "task", priority: "high", status: "todo" },
+    ],
+  },
+  inProgress: {
+    id: "inProgress",
+    title: "In Progress",
+    tasks: [
+      {
+        id: "ORA-2348",
+        title: "Stack Design",
+        type: "task",
+        priority: "high",
+        status: "inProgress",
+        assignee: { name: "Sarah Lee", initials: "SL" },
+      },
+    ],
+  },
+  review: {
+    id: "review",
+    title: "Review",
+    tasks: [
+      {
+        id: "ORA-2350",
+        title: "Backend Development",
+        type: "task",
+        priority: "highest",
+        status: "review",
+      },
+      {
+        id: "ORA-2351",
+        title: "Design of frontend routes",
+        type: "story",
+        priority: "high",
+        status: "review",
+        assignee: { name: "Mike Chen", initials: "MC" },
+      },
+    ],
+  },
+  done: {
+    id: "done",
+    title: "Done",
+    tasks: [
+      {
+        id: "ORA-2352",
+        title: "UI/UX Design",
+        type: "task",
+        priority: "medium",
+        status: "done",
+        assignee: { name: "John Doe", initials: "JD" },
+      },
+      { id: "ORA-2353", title: "Requirements gathering", type: "story", priority: "high", status: "done" },
+    ],
+  },
+}
+
 export function TaskBoard() {
   const [createTaskOpen, setCreateTaskOpen] = useState(false)
-  const [columns, setColumns] = useState({
-    todo: {
-      id: "todo",
-      title: "To Do",
-      tasks: [
-        { id: "ORA-2345", title: "Setup cloud infrastructure", type: "task", priority: "high", status: "todo" },
-        {
-          id: "ORA-2346",
-          title: "Database migration plan",
-          type: "story",
-          priority: "highest",
-          status: "todo",
-          assignee: { name: "John Doe", initials: "JD" },
-        },
-        { id: "ORA-2347", title: "Login page not responsive", type: "bug", priority: "medium", status: "todo" },
-      ],
-    },
-    inProgress: {
-      id: "inProgress",
-      title: "In Progress",
-      tasks: [
-        {
-          id: "ORA-2348",
-          title: "Implement SSO authentication",
-          type: "task",
-          priority: "high",
-          status: "inProgress",
-          assignee: { name: "Sarah Lee", initials: "SL" },
-        },
-        {
-          id: "ORA-2349",
-          title: "Create API documentation",
-          type: "story",
-          priority: "medium",
-          status: "inProgress",
-          assignee: { name: "John Doe", initials: "JD" },
-        },
-      ],
-    },
-    review: {
-      id: "review",
-      title: "Review",
-      tasks: [
-        {
-          id: "ORA-2350",
-          title: "Code review for security module",
-          type: "task",
-          priority: "highest",
-          status: "review",
-        },
-        {
-          id: "ORA-2351",
-          title: "Performance testing results",
-          type: "story",
-          priority: "high",
-          status: "review",
-          assignee: { name: "Mike Chen", initials: "MC" },
-        },
-      ],
-    },
-    done: {
-      id: "done",
-      title: "Done",
-      tasks: [
-        {
-          id: "ORA-2352",
-          title: "Initial project setup",
-          type: "task",
-          priority: "medium",
-          status: "done",
-          assignee: { name: "John Doe", initials: "JD" },
-        },
-        { id: "ORA-2353", title: "Requirements gathering", type: "story", priority: "high", status: "done" },
-      ],
-    },
-  })
+  const [columns, setColumns] = useState<Columns>({})
 
-  const onDragEnd = (result) => {
+  // Carga desde localStorage o establece columns por defecto
+  useEffect(() => {
+    const storedColumns = localStorage.getItem("columns")
+    if (storedColumns) {
+      setColumns(JSON.parse(storedColumns))
+    } else {
+      setColumns(defaultColumns)
+    }
+  }, [])
+
+  // Guarda automáticamente cada vez que cambien las columnas
+  useEffect(() => {
+    if (Object.keys(columns).length > 0) {
+      localStorage.setItem("columns", JSON.stringify(columns))
+    }
+  }, [columns])
+
+  // Recibe la nueva tarea y la agrega en la columna "todo"
+  function handleCreateTask(newTask: Task) {
+    const status = newTask.status || "todo"
+    const columnCopy = { ...columns }
+    columnCopy[status].tasks = [...columnCopy[status].tasks, newTask]
+    setColumns(columnCopy)
+  }
+
+  // Mueve la tarea de columna al soltar
+  const onDragEnd = (result: DropResult) => {
     const { source, destination } = result
-
-    // If the item was dropped outside of a droppable area
-    if (!destination) {
-      return
-    }
-
-    // If the item was dropped in the same place
-    if (source.droppableId === destination.droppableId && source.index === destination.index) {
-      return
-    }
+    if (!destination) return
+    if (source.droppableId === destination.droppableId && source.index === destination.index) return
 
     const sourceColumn = columns[source.droppableId]
     const destColumn = columns[destination.droppableId]
@@ -121,7 +144,8 @@ export function TaskBoard() {
     const destTasks = source.droppableId === destination.droppableId ? sourceTasks : [...destColumn.tasks]
 
     const [removed] = sourceTasks.splice(source.index, 1)
-    destTasks.splice(destination.index, 0, { ...removed, status: destination.droppableId })
+    removed.status = destination.droppableId
+    destTasks.splice(destination.index, 0, removed)
 
     setColumns({
       ...columns,
@@ -154,7 +178,7 @@ export function TaskBoard() {
   const getTypeIcon = (type: Task["type"]) => {
     switch (type) {
       case "bug":
-        return <AlertCircle className="h-3 w-3 text-[#F7630C]" />
+        return <AlertCircle className="h-3 w-3 text-[#C74634]" />
       case "task":
         return <CheckCircle2 className="h-3 w-3 text-[#3A3A3A]" />
       case "story":
@@ -171,7 +195,7 @@ export function TaskBoard() {
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="lucide lucide-layers text-[#F7630C]"
+            className="lucide lucide-layers text-[#C74634]"
           >
             <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" />
             <path d="m22 12.5-8.58 3.91a2 2 0 0 1-1.66 0L2.6 12.5" />
@@ -192,7 +216,7 @@ export function TaskBoard() {
           <Button variant="outline" className="border-gray-200">
             Filter
           </Button>
-          <Button onClick={() => setCreateTaskOpen(true)} className="bg-[#F7630C] hover:bg-[#E25A00]">
+          <Button onClick={() => setCreateTaskOpen(true)} className="bg-[#C74634] hover:bg-[#b03d2e]">
             <Plus className="h-4 w-4 mr-1" /> Create
           </Button>
         </div>
@@ -271,8 +295,11 @@ export function TaskBoard() {
         </div>
       </DragDropContext>
 
-      <CreateTaskDialog open={createTaskOpen} setOpen={setCreateTaskOpen} />
+      <CreateTaskDialog
+        open={createTaskOpen}
+        setOpen={setCreateTaskOpen}
+        onCreateTask={handleCreateTask}
+      />
     </div>
   )
 }
-

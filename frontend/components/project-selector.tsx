@@ -100,7 +100,7 @@ export function ProjectSelector() {
           ))}
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => setCreateProjectOpen(true)}>
-            <span className="text-[#F7630C]">+ Create new project</span>
+            <span className="text-[#C74634]">+ Create new project</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
