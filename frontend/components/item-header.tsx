@@ -40,7 +40,7 @@ export function ItemHeader({ id, title, type, priority, status, assignee, onStat
   const getTypeIcon = (type: ItemHeaderProps["type"]) => {
     switch (type) {
       case "bug":
-        return <AlertCircle className="h-5 w-5 text-[#F7630C]" />
+        return <AlertCircle className="h-5 w-5 text-[#C74634]" />
       case "task":
         return <CheckCircle2 className="h-5 w-5 text-[#3A3A3A]" />
       case "story":
@@ -51,7 +51,7 @@ export function ItemHeader({ id, title, type, priority, status, assignee, onStat
   const getPriorityIcon = (priority: ItemHeaderProps["priority"]) => {
     switch (priority) {
       case "highest":
-        return <ArrowUpRight className="h-4 w-4 text-[#F7630C]" />
+        return <ArrowUpRight className="h-4 w-4 text-[#C74634]" />
       case "high":
         return <ArrowUpRight className="h-4 w-4 text-[#FF8B00]" />
       case "medium":
@@ -68,7 +68,7 @@ export function ItemHeader({ id, title, type, priority, status, assignee, onStat
       case "to do":
         return "bg-gray-100 text-[#3A3A3A]"
       case "in progress":
-        return "bg-orange-100 text-[#F7630C]"
+        return "bg-orange-100 text-[#C74634]"
       case "review":
         return "bg-gray-200 text-[#707070]"
       case "done":

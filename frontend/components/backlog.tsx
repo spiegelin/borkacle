@@ -125,7 +125,7 @@ export function Backlog() {
   const getTypeIcon = (type: Task["type"]) => {
     switch (type) {
       case "bug":
-        return <AlertCircle className="h-4 w-4 text-[#F7630C]" />
+        return <AlertCircle className="h-4 w-4 text-[#C74634]" />
       case "task":
         return <CheckCircle2 className="h-4 w-4 text-[#3A3A3A]" />
       case "story":
@@ -142,7 +142,7 @@ export function Backlog() {
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="lucide lucide-layers text-[#F7630C]"
+            className="lucide lucide-layers text-[#C74634]"
           >
             <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" />
             <path d="m22 12.5-8.58 3.91a2 2 0 0 1-1.66 0L2.6 12.5" />
@@ -155,9 +155,9 @@ export function Backlog() {
   const getPriorityColor = (priority: Task["priority"]) => {
     switch (priority) {
       case "highest":
-        return "bg-red-100 text-[#F7630C]"
+        return "bg-red-100 text-[#C74634]"
       case "high":
-        return "bg-orange-100 text-[#E25A00]"
+        return "bg-orange-100 text-[#b03d2e]"
       case "medium":
         return "bg-yellow-100 text-[#D9A600]"
       case "low":
@@ -172,7 +172,7 @@ export function Backlog() {
       case "to do":
         return "bg-gray-100 text-[#3A3A3A]"
       case "in progress":
-        return "bg-orange-100 text-[#F7630C]"
+        return "bg-orange-100 text-[#C74634]"
       case "review":
         return "bg-gray-200 text-[#707070]"
       case "done":
@@ -188,7 +188,7 @@ export function Backlog() {
           <p className="text-gray-500">Enterprise Cloud Migration</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setCreateTaskOpen(true)} className="bg-[#F7630C] hover:bg-[#E25A00]">
+          <Button onClick={() => setCreateTaskOpen(true)} className="bg-[#C74634] hover:bg-[#b03d2e]">
             <Plus className="h-4 w-4 mr-1" /> Create
           </Button>
         </div>

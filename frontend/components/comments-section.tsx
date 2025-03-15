@@ -73,7 +73,7 @@ export function CommentsSection() {
           onChange={(e) => setNewComment(e.target.value)}
           className="min-h-[100px]"
         />
-        <Button onClick={handleAddComment} className="mt-2 bg-[#F7630C] hover:bg-[#E25A00]">
+        <Button onClick={handleAddComment} className="mt-2 bg-[#C74634] hover:bg-[#b03d2e]">
           Add Comment
         </Button>
       </div>

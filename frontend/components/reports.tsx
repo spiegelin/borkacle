@@ -1,7 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { CalendarIcon, Download, Filter, FileText, FileSpreadsheet, FileIcon as FilePdf } from "lucide-react"
+import {
+  CalendarIcon,
+  Download,
+  Filter,
+  FileText,
+  FileSpreadsheet,
+  FileIcon as FilePdf,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -11,7 +18,12 @@ import { Calendar } from "@/components/ui/calendar"
 import { format, subDays } from "date-fns"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Dialog,
   DialogContent,
@@ -22,18 +34,45 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 
+// Importamos Chart.js y react-chartjs-2
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title as ChartTitle,
+  Tooltip,
+  Legend,
+} from "chart.js"
+import { Line, Bar } from "react-chartjs-2"
+
+// Registramos componentes de Chart.js
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ChartTitle,
+  Tooltip,
+  Legend
+)
+
 export function Reports() {
+  // Estado inicial de filtros
   const [dateRange, setDateRange] = useState("30days")
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [filterDialogOpen, setFilterDialogOpen] = useState(false)
 
-  // Date range state
+  // Rango de fechas para el calendario
   const today = new Date()
   const [dateFrom, setDateFrom] = useState<Date>(subDays(today, 30))
   const [dateTo, setDateTo] = useState<Date>(today)
   const [calendarView, setCalendarView] = useState<"from" | "to">("from")
 
-  // Filter state
+  // Configuración de filtros
   const [filters, setFilters] = useState({
     taskTypes: {
       bugs: true,
@@ -56,6 +95,7 @@ export function Reports() {
     },
   })
 
+  // Manejo de cambios en el estado de los filtros
   const handleFilterChange = (category: string, item: string, checked: boolean) => {
     setFilters((prev) => ({
       ...prev,
@@ -66,17 +106,14 @@ export function Reports() {
     }))
   }
 
+  // Función de exportar (placeholder)
   const handleExport = (format: string) => {
-    // In a real application, this would trigger an API call to generate the export
     console.log(`Exporting report in ${format} format...`)
-
-    // Simulate export process
     const reportName = `oracle-cloud-report-${format(new Date(), "yyyy-MM-dd")}`
-
-    // Show success message or download the file
     alert(`Report "${reportName}" has been exported as ${format.toUpperCase()}`)
   }
 
+  // Formato del rango de fechas seleccionado
   const formatDateRange = () => {
     if (dateFrom && dateTo) {
       return `${format(dateFrom, "MMM d")} - ${format(dateTo, "MMM d")}`
@@ -84,24 +121,233 @@ export function Reports() {
     return "Select date range"
   }
 
+  // Contar cuántos filtros se han “desmarcado”
   const getActiveFilterCount = () => {
     const totalFilters =
       Object.values(filters.taskTypes).filter((v) => !v).length +
       Object.values(filters.assignees).filter((v) => !v).length +
       Object.values(filters.priorities).filter((v) => !v).length
-
     return totalFilters
+  }
+
+  // ------------------------------
+  //  DATOS Y OPCIONES PARA CHARTS
+  // ------------------------------
+
+  // 1) BURNDOWN (Line Chart)
+  const burndownData = {
+    labels: ["Day 1", "Day 2", "Day 3", "Day 4", "Day 5"],
+    datasets: [
+      {
+        label: "Ideal Burndown",
+        data: [50, 40, 30, 20, 10],
+        borderColor: "rgb(59, 130, 246)",
+        backgroundColor: "rgba(59, 130, 246, 0.2)",
+        tension: 0.3,
+      },
+      {
+        label: "Actual Burndown",
+        data: [50, 45, 36, 28, 15],
+        borderColor: "rgb(239, 68, 68)",
+        backgroundColor: "rgba(239, 68, 68, 0.2)",
+        tension: 0.3,
+      },
+    ],
+  }
+
+  const burndownOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "top" as const,
+      },
+      title: {
+        display: true,
+        text: "Sprint Burndown (Example)",
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: "Remaining Points",
+        },
+      },
+      x: {
+        title: {
+          display: true,
+          text: "Days",
+        },
+      },
+    },
+  }
+
+  // 2) VELOCITY (Bar Chart)
+  // Ejemplo de "story points" completados en 5 sprints
+  const velocityData = {
+    labels: ["Sprint 1", "Sprint 2", "Sprint 3", "Sprint 4", "Sprint 5"],
+    datasets: [
+      {
+        label: "Story Points Completed",
+        data: [20, 25, 15, 30, 28],
+        backgroundColor: "rgba(34, 197, 94, 0.5)", // verde
+        borderColor: "rgba(34, 197, 94, 1)",
+        borderWidth: 1,
+      },
+    ],
+  }
+
+  const velocityOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "top" as const,
+      },
+      title: {
+        display: true,
+        text: "Team Velocity (Example)",
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: "Story Points",
+        },
+      },
+      x: {
+        title: {
+          display: true,
+          text: "Sprints",
+        },
+      },
+    },
+  }
+
+  // 3) CUMULATIVE FLOW (Stacked Area con Line)
+  // Simulamos 3 estados: To Do, In Progress, Done
+  const cumulativeData = {
+    labels: ["Day 1", "Day 2", "Day 3", "Day 4", "Day 5"],
+    datasets: [
+      {
+        label: "To Do",
+        data: [10, 8, 7, 6, 5],
+        borderColor: "rgba(96, 165, 250, 1)", // azul
+        backgroundColor: "rgba(96, 165, 250, 0.3)",
+        fill: true,
+        tension: 0.3,
+      },
+      {
+        label: "In Progress",
+        data: [5, 6, 6, 5, 3],
+        borderColor: "rgba(250, 204, 21, 1)", // amarillo
+        backgroundColor: "rgba(250, 204, 21, 0.3)",
+        fill: true,
+        tension: 0.3,
+      },
+      {
+        label: "Done",
+        data: [2, 4, 6, 7, 10],
+        borderColor: "rgba(34, 197, 94, 1)", // verde
+        backgroundColor: "rgba(34, 197, 94, 0.3)",
+        fill: true,
+        tension: 0.3,
+      },
+    ],
+  }
+
+  const cumulativeOptions = {
+    responsive: true,
+    stacked: true,
+    plugins: {
+      legend: {
+        position: "top" as const,
+      },
+      title: {
+        display: true,
+        text: "Cumulative Flow (Example)",
+      },
+    },
+    scales: {
+      x: {
+        stacked: true,
+        title: {
+          display: true,
+          text: "Days",
+        },
+      },
+      y: {
+        stacked: true,
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: "Number of Tasks",
+        },
+      },
+    },
+  }
+
+  // 4) CREATED vs RESOLVED (Line Chart con 2 datasets)
+  const createdResolvedData = {
+    labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+    datasets: [
+      {
+        label: "Created",
+        data: [8, 12, 10, 15],
+        borderColor: "rgba(59, 130, 246, 1)",
+        backgroundColor: "rgba(59, 130, 246, 0.2)",
+        tension: 0.3,
+      },
+      {
+        label: "Resolved",
+        data: [5, 9, 8, 13],
+        borderColor: "rgba(239, 68, 68, 1)",
+        backgroundColor: "rgba(239, 68, 68, 0.2)",
+        tension: 0.3,
+      },
+    ],
+  }
+
+  const createdResolvedOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "top" as const,
+      },
+      title: {
+        display: true,
+        text: "Created vs Resolved (Example)",
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: "Number of Issues",
+        },
+      },
+      x: {
+        title: {
+          display: true,
+          text: "Weeks",
+        },
+      },
+    },
   }
 
   return (
     <div className="space-y-4">
+      {/* Encabezado */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[#3A3A3A]">Reports</h1>
           <p className="text-gray-500">Enterprise Cloud Migration</p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Calendar Button with Date Range Picker */}
+          {/* Botón para rango de fechas (Calendario) */}
           <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
             <PopoverTrigger asChild>
               <Button variant="outline" className="border-gray-200">
@@ -179,12 +425,12 @@ export function Reports() {
             </PopoverContent>
           </Popover>
 
-          {/* Filter Button with Dialog */}
+          {/* Botón de filtros (Dialog) */}
           <Button variant="outline" className="border-gray-200 relative" onClick={() => setFilterDialogOpen(true)}>
             <Filter className="h-4 w-4 mr-1" />
             Filter
             {getActiveFilterCount() > 0 && (
-              <Badge className="ml-1 h-5 w-5 p-0 flex items-center justify-center bg-[#F7630C] absolute -top-1 -right-1">
+              <Badge className="ml-1 h-5 w-5 p-0 flex items-center justify-center bg-[#C74634] absolute -top-1 -right-1">
                 {getActiveFilterCount()}
               </Badge>
             )}
@@ -196,6 +442,7 @@ export function Reports() {
                 <DialogDescription>Select the filters to apply to your reports.</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
+                {/* Tipo de Tareas */}
                 <div>
                   <h3 className="font-medium mb-2">Task Types</h3>
                   <div className="grid grid-cols-2 gap-2">
@@ -234,6 +481,7 @@ export function Reports() {
                   </div>
                 </div>
 
+                {/* Asignados */}
                 <div>
                   <h3 className="font-medium mb-2">Assignees</h3>
                   <div className="grid grid-cols-2 gap-2">
@@ -272,6 +520,7 @@ export function Reports() {
                   </div>
                 </div>
 
+                {/* Prioridades */}
                 <div>
                   <h3 className="font-medium mb-2">Priorities</h3>
                   <div className="grid grid-cols-2 gap-2">
@@ -322,7 +571,7 @@ export function Reports() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    // Reset all filters to true
+                    // Resetea todos los filtros a true
                     setFilters({
                       taskTypes: {
                         bugs: true,
@@ -353,7 +602,7 @@ export function Reports() {
             </DialogContent>
           </Dialog>
 
-          {/* Export Button with Dropdown */}
+          {/* Botón de exportar (Dropdown) */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="border-gray-200">
@@ -378,6 +627,7 @@ export function Reports() {
         </div>
       </div>
 
+      {/* Tabs con cada gráfica */}
       <Tabs defaultValue="burndown">
         <TabsList className="grid w-full grid-cols-4 mb-4">
           <TabsTrigger value="burndown">Burndown</TabsTrigger>
@@ -386,6 +636,7 @@ export function Reports() {
           <TabsTrigger value="created-resolved">Created vs Resolved</TabsTrigger>
         </TabsList>
 
+        {/* BURNDOWN */}
         <TabsContent value="burndown">
           <Card>
             <CardHeader>
@@ -408,37 +659,14 @@ export function Reports() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="h-[400px] flex items-center justify-center bg-gray-50 rounded-lg">
-                <div className="text-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="64"
-                    height="64"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="lucide lucide-bar-chart-3 mx-auto text-gray-400 mb-4"
-                  >
-                    <path d="M3 3v18h18" />
-                    <path d="M18 17V9" />
-                    <path d="M13 17V5" />
-                    <path d="M8 17v-3" />
-                  </svg>
-                  <p className="text-gray-500">Burndown chart visualization would appear here</p>
-                  <p className="text-sm text-gray-400 mt-1">Showing ideal vs actual burndown for Sprint 3</p>
-                  <p className="text-sm text-gray-400 mt-1">Date range: {formatDateRange()}</p>
-                  <p className="text-sm text-gray-400 mt-1">
-                    {getActiveFilterCount() > 0 ? `${getActiveFilterCount()} filters applied` : "No filters applied"}
-                  </p>
-                </div>
+              <div className="bg-white p-4 rounded-md shadow-sm">
+                <Line data={burndownData} options={burndownOptions} />
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* VELOCITY */}
         <TabsContent value="velocity">
           <Card>
             <CardHeader>
@@ -460,36 +688,14 @@ export function Reports() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="h-[400px] flex items-center justify-center bg-gray-50 rounded-lg">
-                <div className="text-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="64"
-                    height="64"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="lucide lucide-bar-chart mx-auto text-gray-400 mb-4"
-                  >
-                    <path d="M12 20V10" />
-                    <path d="M18 20V4" />
-                    <path d="M6 20v-4" />
-                  </svg>
-                  <p className="text-gray-500">Velocity chart visualization would appear here</p>
-                  <p className="text-sm text-gray-400 mt-1">Showing story points completed across sprints</p>
-                  <p className="text-sm text-gray-400 mt-1">Date range: {formatDateRange()}</p>
-                  <p className="text-sm text-gray-400 mt-1">
-                    {getActiveFilterCount() > 0 ? `${getActiveFilterCount()} filters applied` : "No filters applied"}
-                  </p>
-                </div>
+              <div className="bg-white p-4 rounded-md shadow-sm">
+                <Bar data={velocityData} options={velocityOptions} />
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* CUMULATIVE FLOW */}
         <TabsContent value="cumulative">
           <Card>
             <CardHeader>
@@ -512,35 +718,15 @@ export function Reports() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="h-[400px] flex items-center justify-center bg-gray-50 rounded-lg">
-                <div className="text-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="64"
-                    height="64"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="lucide lucide-area-chart mx-auto text-gray-400 mb-4"
-                  >
-                    <path d="M3 3v18h18" />
-                    <path d="M3 15 7 9l4 4 8-8 2 2" />
-                  </svg>
-                  <p className="text-gray-500">Cumulative flow diagram would appear here</p>
-                  <p className="text-sm text-gray-400 mt-1">Showing work distribution across workflow states</p>
-                  <p className="text-sm text-gray-400 mt-1">Date range: {formatDateRange()}</p>
-                  <p className="text-sm text-gray-400 mt-1">
-                    {getActiveFilterCount() > 0 ? `${getActiveFilterCount()} filters applied` : "No filters applied"}
-                  </p>
-                </div>
+              <div className="bg-white p-4 rounded-md shadow-sm">
+                {/* Usamos Line pero con fill y stacked */}
+                <Line data={cumulativeData} options={cumulativeOptions} />
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* CREATED vs RESOLVED */}
         <TabsContent value="created-resolved">
           <Card>
             <CardHeader>
@@ -563,36 +749,15 @@ export function Reports() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="h-[400px] flex items-center justify-center bg-gray-50 rounded-lg">
-                <div className="text-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="64"
-                    height="64"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="lucide lucide-line-chart mx-auto text-gray-400 mb-4"
-                  >
-                    <path d="M3 3v18h18" />
-                    <path d="m19 9-5 5-4-4-3 3" />
-                  </svg>
-                  <p className="text-gray-500">Created vs Resolved chart would appear here</p>
-                  <p className="text-sm text-gray-400 mt-1">Comparing issue creation and resolution rates</p>
-                  <p className="text-sm text-gray-400 mt-1">Date range: {formatDateRange()}</p>
-                  <p className="text-sm text-gray-400 mt-1">
-                    {getActiveFilterCount() > 0 ? `${getActiveFilterCount()} filters applied` : "No filters applied"}
-                  </p>
-                </div>
+              <div className="bg-white p-4 rounded-md shadow-sm">
+                <Line data={createdResolvedData} options={createdResolvedOptions} />
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
+      {/* Tarjetas de datos falsos (Indicadores) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -634,4 +799,3 @@ export function Reports() {
     </div>
   )
 }
-

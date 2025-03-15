@@ -121,7 +121,7 @@ export function Sprints() {
           <p className="text-gray-500">Enterprise Cloud Migration</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setCreateSprintOpen(true)} className="bg-[#F7630C] hover:bg-[#E25A00]">
+          <Button onClick={() => setCreateSprintOpen(true)} className="bg-[#C74634] hover:bg-[#b03d2e]">
             <Plus className="h-4 w-4 mr-1" /> Create Sprint
           </Button>
         </div>
@@ -220,7 +220,7 @@ export function Sprints() {
                         </div>
                         <div className="bg-blue-50 p-4 rounded-lg">
                           <div className="text-sm font-medium text-gray-500 mb-1">In Progress</div>
-                          <div className="text-2xl font-bold text-[#F7630C]">{sprint.tasks.inProgress}</div>
+                          <div className="text-2xl font-bold text-[#C74634]">{sprint.tasks.inProgress}</div>
                         </div>
                         <div className="bg-green-50 p-4 rounded-lg">
                           <div className="text-sm font-medium text-gray-500 mb-1">Completed</div>

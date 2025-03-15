@@ -39,7 +39,7 @@ export function UserProfileSettings() {
               </Avatar>
               <h2 className="text-xl font-semibold">{user.name}</h2>
               <p className="text-sm text-gray-500">{user.email}</p>
-              <Button className="mt-4 bg-[#F7630C] hover:bg-[#E25A00]">Change Avatar</Button>
+              <Button className="mt-4 bg-[#C74634] hover:bg-[#b03d2e]">Change Avatar</Button>
             </CardContent>
           </Card>
         </div>
@@ -73,7 +73,7 @@ export function UserProfileSettings() {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button className="bg-[#F7630C] hover:bg-[#E25A00]">Save Changes</Button>
+                  <Button className="bg-[#C74634] hover:bg-[#b03d2e]">Save Changes</Button>
                 </CardFooter>
               </Card>
             </TabsContent>
@@ -102,7 +102,7 @@ export function UserProfileSettings() {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button className="bg-[#F7630C] hover:bg-[#E25A00]">Update Security Settings</Button>
+                  <Button className="bg-[#C74634] hover:bg-[#b03d2e]">Update Security Settings</Button>
                 </CardFooter>
               </Card>
             </TabsContent>
@@ -127,7 +127,7 @@ export function UserProfileSettings() {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button className="bg-[#F7630C] hover:bg-[#E25A00]">Save Preferences</Button>
+                  <Button className="bg-[#C74634] hover:bg-[#b03d2e]">Save Preferences</Button>
                 </CardFooter>
               </Card>
             </TabsContent>

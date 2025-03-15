@@ -77,7 +77,7 @@ export function Settings() {
               </CardContent>
               <CardFooter className="justify-end space-x-2">
                 <Button variant="outline">Cancel</Button>
-                <Button className="bg-[#F7630C] hover:bg-[#E25A00]">Save Changes</Button>
+                <Button className="bg-[#C74634] hover:bg-[#b03d2e]">Save Changes</Button>
               </CardFooter>
             </Card>
 
@@ -88,7 +88,7 @@ export function Settings() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <div className="h-20 w-20 rounded-md bg-[#F7630C] flex items-center justify-center text-white font-bold text-2xl">
+                  <div className="h-20 w-20 rounded-md bg-[#C74634] flex items-center justify-center text-white font-bold text-2xl">
                     O
                   </div>
                   <div className="space-y-2">

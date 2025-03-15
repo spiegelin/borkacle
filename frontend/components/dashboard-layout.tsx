@@ -51,22 +51,22 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full bg-gray-50">
-        <Sidebar className="border-r border-gray-200">
-          <SidebarHeader className="border-b border-gray-200 p-4">
+        <Sidebar className="border-r border-[#312c2b]">
+          <SidebarHeader className="border-b border-[#312c2b] p-4 bg-[#312c2b]">
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-md bg-[#F7630C] flex items-center justify-center text-white font-bold">
+              <div className="h-8 w-8 rounded-md bg-[#C74634] flex items-center justify-center text-white font-bold">
                 O
               </div>
-              <div className="font-semibold text-[#3A3A3A]">Oracle Cloud Tasks</div>
+              <div className="font-semibold text-white">Oracle Cloud Tasks</div>
             </div>
             <ProjectSelector />
           </SidebarHeader>
-          <SidebarContent>
+          <SidebarContent  className=" bg-[#312c2b]">
             <SidebarGroup>
-              <SidebarGroupLabel>Planning</SidebarGroupLabel>
+              <SidebarGroupLabel className="font-semibold text-white">Planning</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  <SidebarMenuItem>
+                  <SidebarMenuItem className="font-semibold text-white">
                     <SidebarMenuButton isActive={activeView === "board"} onClick={() => setActiveView("board")}>
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -88,7 +88,7 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
                       <span>Board</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  <SidebarMenuItem>
+                  <SidebarMenuItem className="font-semibold text-white">
                     <SidebarMenuButton isActive={activeView === "backlog"} onClick={() => setActiveView("backlog")}>
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -111,7 +111,7 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
                       <span>Backlog</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  <SidebarMenuItem>
+                  <SidebarMenuItem className="font-semibold text-white">
                     <SidebarMenuButton isActive={activeView === "sprints"} onClick={() => setActiveView("sprints")}>
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -138,8 +138,8 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
             </SidebarGroup>
 
             <SidebarGroup>
-              <SidebarGroupLabel>Insights</SidebarGroupLabel>
-              <SidebarGroupContent>
+              <SidebarGroupLabel className="font-semibold text-white">Insights</SidebarGroupLabel>
+              <SidebarGroupContent className="font-semibold text-white">
                 <SidebarMenu>
                   <SidebarMenuItem>
                     <SidebarMenuButton isActive={activeView === "reports"} onClick={() => setActiveView("reports")}>
@@ -167,8 +167,8 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
-          <SidebarFooter className="border-t border-gray-200 p-4">
-            <SidebarMenu>
+          <SidebarFooter className="border-t border-[#312c2b] p-4 bg-[#312c2b]">
+            <SidebarMenu className="font-semibold text-white">
               <SidebarMenuItem>
                 <Link href="/profile-settings" passHref>
                   <SidebarMenuButton>
@@ -186,7 +186,7 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
             <div className="flex items-center gap-2">
               <SidebarTrigger />
               <div className="relative w-64">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-white" />
                 <Input placeholder="Search issues" className="pl-8" />
               </div>
             </div>
@@ -203,7 +203,7 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
                 >
                   <Bell className="h-5 w-5" />
                   {notificationCount > 0 && (
-                    <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-[#F7630C]">
+                    <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-[#C74634]">
                       {notificationCount}
                     </Badge>
                   )}
