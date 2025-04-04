@@ -9,8 +9,36 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
+interface Assignee {
+  name: string
+  avatar?: string
+  initials: string
+}
+
+interface BaseItem {
+  id: string
+  title: string
+  priority: "highest" | "high" | "medium" | "low" | "lowest"
+  status: "to do" | "in progress" | "review" | "done"
+  assignee?: Assignee
+}
+
+interface TaskItem extends BaseItem {
+  type: "task"
+}
+
+interface StoryItem extends BaseItem {
+  type: "story"
+}
+
+interface BugItem extends BaseItem {
+  type: "bug"
+}
+
+type Item = TaskItem | StoryItem | BugItem
+
 // Mock data for demonstration purposes
-const mockItems = {
+const mockItems: Record<string, Item> = {
   "ORA-2345": {
     id: "ORA-2345",
     type: "task",
@@ -40,12 +68,10 @@ const mockItems = {
 export default function ItemPage() {
   const params = useParams()
   const id = params.id as string
-  const [item, setItem] = useState(null)
+  const [item, setItem] = useState<Item | null>(null)
 
   useEffect(() => {
-    if (id) {
-      // In a real application, you would fetch the item data from an API
-      // For this example, we're using mock data
+    if (id && id in mockItems) {
       setItem(mockItems[id])
     }
   }, [id])
@@ -64,8 +90,10 @@ export default function ItemPage() {
     )
   }
 
-  const handleStatusChange = (newStatus) => {
-    setItem({ ...item, status: newStatus })
+  const handleStatusChange = (newStatus: string) => {
+    if (item) {
+      setItem({ ...item, status: newStatus as Item["status"] })
+    }
     // In a real application, you would also update the server with the new status
   }
 

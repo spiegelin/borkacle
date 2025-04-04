@@ -1,24 +1,32 @@
 package com.springboot.MyTodoList.model;
 
 
-import javax.persistence.*;
 import java.time.OffsetDateTime;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 /*
     representation of the TODOITEM table that exists already
     in the autonomous database
  */
 @Entity
-@Table(name = "TODOITEM")
+@Table(name = "TAREAS")
 public class ToDoItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     int ID;
-    @Column(name = "DESCRIPTION")
+    @Column(name = "TITULO")
+    String title;
+    @Column(name = "DESCRIPCION")
     String description;
-    @Column(name = "CREATION_TS")
+    @Column(name = "FECHA_CREACION")
     OffsetDateTime creation_ts;
-    @Column(name = "done")
+    //@Column(name = "done")
     boolean done;
     public ToDoItem(){
 
@@ -27,7 +35,7 @@ public class ToDoItem {
         this.ID = ID;
         this.description = description;
         this.creation_ts = creation_ts;
-        this.done = done;
+        this.done = false;
     }
 
     public int getID() {
@@ -66,9 +74,9 @@ public class ToDoItem {
     public String toString() {
         return "ToDoItem{" +
                 "ID=" + ID +
+                ", title=" + title +
                 ", description='" + description + '\'' +
                 ", creation_ts=" + creation_ts +
-                ", done=" + done +
                 '}';
     }
 }

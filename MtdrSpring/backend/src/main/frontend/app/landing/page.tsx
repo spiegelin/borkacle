@@ -196,53 +196,10 @@ export default function LandingPage() {
             </div>
             <div>
               <h3 className="font-semibold text-lg mb-4">Product</h3>
-              <ul className="space-y-2">
-                <li>
-                  <a href="#" className="text-gray-300 hover:text-white">
-                    Features
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-300 hover:text-white">
-                    Pricing
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-300 hover:text-white">
-                    Integrations
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-300 hover:text-white">
-                    Roadmap
-                  </a>
-                </li>
-              </ul>
             </div>
             <div>
               <h3 className="font-semibold text-lg mb-4">Resources</h3>
-              <ul className="space-y-2">
-                <li>
-                  <a href="#" className="text-gray-300 hover:text-white">
-                    Documentation
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-300 hover:text-white">
-                    Tutorials
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-300 hover:text-white">
-                    Blog
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-300 hover:text-white">
-                    Support
-                  </a>
-                </li>
-              </ul>
+              
             </div>
             <div>
               <h3 className="font-semibold text-lg mb-4">Company</h3>
