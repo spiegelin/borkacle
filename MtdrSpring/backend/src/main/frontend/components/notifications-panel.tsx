@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface NotificationsPanelProps {
-  setNotificationCount: (count: number) => void
+  setNotificationCount: (count: number | ((prev: number) => number)) => void
 }
 
 export function NotificationsPanel({ setNotificationCount }: NotificationsPanelProps) {
@@ -26,12 +26,12 @@ export function NotificationsPanel({ setNotificationCount }: NotificationsPanelP
 
   const markAsRead = (id: number) => {
     setNotifications(notifications.map((n) => (n.id === id ? { ...n, read: true } : n)))
-    setNotificationCount((prev) => Math.max(0, prev - 1))
+    setNotificationCount((prev: number) => Math.max(0, prev - 1))
   }
 
   const dismissNotification = (id: number) => {
     setNotifications(notifications.filter((n) => n.id !== id))
-    setNotificationCount((prev) => Math.max(0, prev - 1))
+    setNotificationCount((prev: number) => Math.max(0, prev - 1))
   }
 
   return (
@@ -64,7 +64,7 @@ export function NotificationsPanel({ setNotificationCount }: NotificationsPanelP
                 >
                   <div className="mt-0.5">
                     {notification.type === "mention" && (
-                      <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center text-[#F7630C]">
+                      <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center text-[#C74634]">
                         <span className="text-xs font-semibold">@</span>
                       </div>
                     )}
@@ -174,7 +174,7 @@ export function NotificationsPanel({ setNotificationCount }: NotificationsPanelP
                     className={`p-3 flex items-start gap-3 hover:bg-gray-50 ${!notification.read ? "bg-blue-50" : ""}`}
                   >
                     <div className="mt-0.5">
-                      <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center text-[#F7630C]">
+                      <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center text-[#C74634]">
                         <span className="text-xs font-semibold">@</span>
                       </div>
                     </div>
@@ -279,7 +279,7 @@ export function NotificationsPanel({ setNotificationCount }: NotificationsPanelP
         </TabsContent>
       </Tabs>
       <div className="p-3 border-t border-gray-200">
-        <Button variant="link" className="w-full text-[#F7630C]">
+        <Button variant="link" className="w-full text-[#C74634]">
           View all notifications
         </Button>
       </div>
