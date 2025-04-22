@@ -2,3 +2,5 @@
 .env
 wallet/
 .vscode
+application.properties
+tools/
