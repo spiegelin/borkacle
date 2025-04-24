@@ -4,3 +4,4 @@ wallet/
 .vscode
 application.properties
 tools/
+target/

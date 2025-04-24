@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  controller:
+    build:
+      context: ./controller
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVER_PORT=8080
+      - BOT_SERVICE_URL=http://bot:8080
+      - FRONTEND_SERVICE_URL=http://frontend:3000
+    networks:
+      - borkacle-network
+    depends_on:
+      - bot
+    restart: unless-stopped
+
+  bot:
+    build:
+      context: ./bot
+    ports:
+      - "8081:8080"
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - CONTROLLER_SERVICE_URL=http://controller:8080
+    networks:
+      - borkacle-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - CONTROLLER_API_URL=http://controller:8080
+    networks:
+      - borkacle-network
+    depends_on:
+      - controller
+    restart: unless-stopped
+
+networks:
+  borkacle-network:
+    driver: bridge 

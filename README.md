@@ -1,19 +1,57 @@
-# oci-react-samples
-A repository for full stack Cloud Native applications with a React JS frontend and various backends (Java, Python, DotNet, and so on) on the Oracle Cloud Infrastructure.
+# Borkacle
 
-![image](https://user-images.githubusercontent.com/7783295/116454396-cbfb7a00-a814-11eb-8196-ba2113858e8b.png)
-  
+Borkacle is a distributed system consisting of three main services: a Telegram bot, a controller API, and a web frontend.
 
-## MyToDo React JS
-The `mtdrworkshop` repository hosts the materiald (code, scripts and instructions) for building and deploying Cloud Native Application using a Java/Helidon backend
+## Project Structure
 
+```
+borkacle/
+├── bot/              # Telegram bot service (Java Spring Boot)
+├── controller/       # Controller API service (Java Spring Boot)
+├── frontend/         # Web frontend (Next.js)
+└── docker-compose.yml # Docker Compose configuration
+```
 
-### Requirements
-The lab executes scripts that require the following software to run properly: (These are already installed on and included with the OCI Cloud Shell)
-* oci-cli
-* python 2.7^
-* terraform
-* kubectl
-* mvn (maven) 
+## Services
 
-## Expect more ...
+### Bot Service
+A Spring Boot application that provides a Telegram bot interface for interacting with the system.
+
+### Controller Service
+A Spring Boot application that acts as the backend coordinator between the Bot and Frontend services.
+
+### Frontend Service
+A Next.js application that provides a web interface for users to interact with the system.
+
+## Local Development
+
+Each service can be run individually in development mode. See the README in each service directory for specific instructions.
+
+## Docker Deployment
+
+The entire system can be run using Docker Compose:
+
+```bash
+# Set your Telegram bot token
+export TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+
+# Build and start all services
+docker-compose up -d
+```
+
+## Kubernetes Deployment on OCI
+
+Each service includes Kubernetes manifests in its `k8s/` directory for deployment on Oracle Cloud Infrastructure Kubernetes Engine.
+
+### Prerequisites for OCI Deployment
+- OCI CLI configured with appropriate permissions
+- kubectl configured to access your OCI Kubernetes cluster
+- Container Registry access in OCI
+
+### Deployment Steps
+
+1. Build and push Docker images to OCI Container Registry
+2. Deploy services using the Kubernetes manifests
+3. Configure the Ingress for external access
+
+See detailed deployment instructions in each service's README.
