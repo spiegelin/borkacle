@@ -3,7 +3,9 @@ package com.springboot.MyTodoList.controller;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,6 +47,10 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 	private String botToken;
 	private String botName;
 
+	private Map<Long, String> pendingAuthEmails = new HashMap<>();
+	private Map<Long, String> userRoles = new HashMap<>();
+	private static final int MAX_RETRIES = 3;
+
 	public ToDoItemBotController(String botToken, String botName) {
 		super(botToken);
 		this.botToken = botToken;
@@ -57,121 +63,133 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 			long chatId = update.getMessage().getChatId();
 			String messageText = update.getMessage().getText();
 
-			if (messageText.equals("/start")) {
+			try {
+				if (messageText.equals("/start")) {
+					showMainMenu(chatId);
+				} else if (messageText.equals("❓ Help")) {
+					sendMessageWithRetry(chatId, BotMessages.HELP_MESSAGE.getMessage(), null);
+				} else if (messageText.equals("➕ Add Task")) {
+					sendMessageWithRetry(chatId, "Please provide task details in the following format:\n" +
+												  "Title: [task title]\n" +
+												  "Description: [task description] (optional)\n" +
+												  "Estimated Time: [hours]\n" +
+												  "Project ID: [project id]\n" +
+												  "Type: [Bug/Feature/Improvement]\n" +
+												  "Priority ID: [priority id] (optional)", null);
+				} else if (messageText.equals("📋 List Tasks")) {
+					showAllTasks(chatId);
+				} else if (messageText.equals("👥 Assign User")) {
+					sendMessageWithRetry(chatId, "Please provide assignment details:\n" +
+												  "Task ID: [task id]\n" +
+												  "User ID: [user id]", null);
+				} else if (messageText.equals("📅 Assign Sprint")) {
+					sendMessageWithRetry(chatId, "Please provide sprint assignment details:\n" +
+												  "Task ID: [task id]\n" +
+												  "Sprint ID: [sprint id]", null);
+				} else if (messageText.equals("✅ Complete Task")) {
+					sendMessageWithRetry(chatId, "Please provide completion details:\n" +
+												  "Task ID: [task id]\n" +
+												  "Actual Time: [hours]", null);
+				} else if (messageText.equals("✏️ Edit Task")) {
+					sendMessageWithRetry(chatId, "Please provide task details to update (only include fields you want to change):\n" +
+												  "Task ID: [task id]\n" +
+												  "Title: [new title]\n" +
+												  "Description: [new description]\n" +
+												  "Estimated Time: [new hours]\n" +
+												  "Estado ID: [new estado id]\n" +
+												  "Priority ID: [new priority id]\n" +
+												  "Project ID: [new project id]\n" +
+												  "Sprint ID: [new sprint id]\n" +
+												  "Actual Time: [new hours]\n" +
+												  "Type: [new type]", null);
+				} else if (messageText.equals("📊 Show Sprint")) {
+					showCurrentSprintTasks(chatId);
+				} else if (messageText.equals("❌ Hide")) {
+					hideKeyboard(chatId);
+				} else if (messageText.equals("🔑 Auth")) {
+					sendMessageWithRetry(chatId, "Please enter your email:", null);
+					pendingAuthEmails.put(chatId, "WAITING_EMAIL");
+				} else if (pendingAuthEmails.containsKey(chatId)) {
+					if (pendingAuthEmails.get(chatId).equals("WAITING_EMAIL")) {
+						pendingAuthEmails.put(chatId, messageText);
+						sendMessageWithRetry(chatId, "Please enter your password:", null);
+					} else {
+						String email = pendingAuthEmails.get(chatId);
+						handleAuthentication(chatId, email, messageText);
+						pendingAuthEmails.remove(chatId);
+					}
+				} else if (userRoles.containsKey(chatId)) {
+					handleAuthenticatedCommand(chatId, messageText);
+				} else {
+					// Handle task creation based on message format
+					if (messageText.contains("Title:") && messageText.contains("Estimated Time:") && 
+						messageText.contains("Project ID:") && messageText.contains("Type:")) {
+						handleTaskCreation(chatId, messageText);
+					} else if (messageText.contains("Task ID:") && messageText.contains("User ID:")) {
+						handleUserAssignment(chatId, messageText);
+					} else if (messageText.contains("Task ID:") && messageText.contains("Sprint ID:")) {
+						handleSprintAssignment(chatId, messageText);
+					} else if (messageText.contains("Task ID:") && messageText.contains("Actual Time:")) {
+						handleTaskCompletion(chatId, messageText);
+					} else if (messageText.contains("Task ID:") && (messageText.contains("Title:") || 
+						messageText.contains("Description:") || messageText.contains("Estimated Time:") ||
+						messageText.contains("Estado ID:") || messageText.contains("Priority ID:") ||
+						messageText.contains("Project ID:") || messageText.contains("Sprint ID:") ||
+						messageText.contains("Actual Time:") || messageText.contains("Type:"))) {
+						handleTaskUpdate(chatId, messageText);
+					}
+				}
+			} catch (Exception e) {
+				logger.error("Error processing update: {}", e.getMessage());
+				sendMessageWithRetry(chatId, "An error occurred. Please try again.", null);
 				showMainMenu(chatId);
-			} else if (messageText.equals("❓ Help")) {
-				sendMessage(chatId, BotMessages.HELP_MESSAGE.getMessage());
-			} else if (messageText.equals("➕ Add Task")) {
-				sendMessage(chatId, "Please provide task details in the following format:\n" +
-								  "Title: [task title]\n" +
-								  "Description: [task description] (optional)\n" +
-								  "Estimated Time: [hours]\n" +
-								  "Project ID: [project id]\n" +
-								  "Type: [Bug/Feature/Improvement]\n" +
-								  "Priority ID: [priority id] (optional)");
-			} else if (messageText.equals("📋 List Tasks")) {
-				showAllTasks(chatId);
-			} else if (messageText.equals("👥 Assign User")) {
-				sendMessage(chatId, "Please provide assignment details:\n" +
-								  "Task ID: [task id]\n" +
-								  "User ID: [user id]");
-			} else if (messageText.equals("📅 Assign Sprint")) {
-				sendMessage(chatId, "Please provide sprint assignment details:\n" +
-								  "Task ID: [task id]\n" +
-								  "Sprint ID: [sprint id]");
-			} else if (messageText.equals("✅ Complete Task")) {
-				sendMessage(chatId, "Please provide completion details:\n" +
-								  "Task ID: [task id]\n" +
-								  "Actual Time: [hours]");
-			} else if (messageText.equals("✏️ Edit Task")) {
-				sendMessage(chatId, "Please provide task details to update (only include fields you want to change):\n" +
-								  "Task ID: [task id]\n" +
-								  "Title: [new title]\n" +
-								  "Description: [new description]\n" +
-								  "Estimated Time: [new hours]\n" +
-								  "Estado ID: [new estado id]\n" +
-								  "Priority ID: [new priority id]\n" +
-								  "Project ID: [new project id]\n" +
-								  "Sprint ID: [new sprint id]\n" +
-								  "Actual Time: [new hours]\n" +
-								  "Type: [new type]");
-			} else if (messageText.equals("📊 Show Sprint")) {
-				showCurrentSprintTasks(chatId);
-			} else if (messageText.equals("❌ Hide")) {
-				hideKeyboard(chatId);
-			} else {
-				// Handle task creation based on message format
-				if (messageText.contains("Title:") && messageText.contains("Estimated Time:") && 
-					messageText.contains("Project ID:") && messageText.contains("Type:")) {
-					handleTaskCreation(chatId, messageText);
-				} else if (messageText.contains("Task ID:") && messageText.contains("User ID:")) {
-					handleUserAssignment(chatId, messageText);
-				} else if (messageText.contains("Task ID:") && messageText.contains("Sprint ID:")) {
-					handleSprintAssignment(chatId, messageText);
-				} else if (messageText.contains("Task ID:") && messageText.contains("Actual Time:")) {
-					handleTaskCompletion(chatId, messageText);
-				} else if (messageText.contains("Task ID:") && (messageText.contains("Title:") || 
-					messageText.contains("Description:") || messageText.contains("Estimated Time:") ||
-					messageText.contains("Estado ID:") || messageText.contains("Priority ID:") ||
-					messageText.contains("Project ID:") || messageText.contains("Sprint ID:") ||
-					messageText.contains("Actual Time:") || messageText.contains("Type:"))) {
-					handleTaskUpdate(chatId, messageText);
+			}
+		}
+	}
+
+	private void sendMessageWithRetry(long chatId, String text, ReplyKeyboardMarkup keyboard) {
+		int retries = 0;
+		while (retries < MAX_RETRIES) {
+			try {
+				SendMessage message = new SendMessage();
+				message.setChatId(chatId);
+				message.setText(text);
+				if (keyboard != null) {
+					message.setReplyMarkup(keyboard);
+				}
+				execute(message);
+				logger.info("Message sent successfully to chat {}", chatId);
+				return;
+			} catch (TelegramApiException e) {
+				retries++;
+				logger.error("Error sending message (attempt {}/{}): {}", retries, MAX_RETRIES, e.getMessage());
+				if (retries == MAX_RETRIES) {
+					logger.error("Failed to send message after {} attempts", MAX_RETRIES);
+					return;
+				}
+				try {
+					Thread.sleep(1000 * retries); // Exponential backoff
+				} catch (InterruptedException ie) {
+					Thread.currentThread().interrupt();
+					return;
 				}
 			}
 		}
 	}
 
 	private void showMainMenu(long chatId) {
-		SendMessage message = new SendMessage();
-		message.setChatId(chatId);
-		message.setText("Welcome to the Task Management Bot! Please select an option:");
-
-		// Create keyboard
 		ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
 		List<KeyboardRow> keyboard = new ArrayList<>();
-
-		// First row
 		KeyboardRow row1 = new KeyboardRow();
-		row1.add("➕ Add Task");
-		row1.add("📋 List Tasks");
+		row1.add("❓ Help");
+		row1.add("🔑 Auth");
 		keyboard.add(row1);
-
-		// Second row
-		KeyboardRow row2 = new KeyboardRow();
-		row2.add("👥 Assign User");
-		row2.add("📅 Assign Sprint");
-		keyboard.add(row2);
-
-		// Third row
-		KeyboardRow row3 = new KeyboardRow();
-		row3.add("✅ Complete Task");
-		row3.add("✏️ Edit Task");
-		keyboard.add(row3);
-
-		// Fourth row
-		KeyboardRow row4 = new KeyboardRow();
-		row4.add("📊 Show Sprint");
-		row4.add("❓ Help");
-		keyboard.add(row4);
-
-		// Fifth row
-		KeyboardRow row5 = new KeyboardRow();
-		row5.add("❌ Hide");
-		keyboard.add(row5);
-
-		// Configure keyboard
 		keyboardMarkup.setKeyboard(keyboard);
 		keyboardMarkup.setResizeKeyboard(true);
 		keyboardMarkup.setOneTimeKeyboard(false);
 		keyboardMarkup.setSelective(true);
-		message.setReplyMarkup(keyboardMarkup);
 
-		try {
-			execute(message);
-			logger.info("Main menu keyboard sent to chat {}", chatId);
-		} catch (TelegramApiException e) {
-			logger.error("Error showing main menu: " + e.getMessage(), e);
-		}
+		sendMessageWithRetry(chatId, "Welcome to the Task Management Bot! Please select an option:", keyboardMarkup);
 	}
 
 	private void hideKeyboard(long chatId) {
@@ -183,17 +201,6 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 			execute(message);
 		} catch (TelegramApiException e) {
 			logger.error("Error hiding keyboard: " + e.getMessage(), e);
-		}
-	}
-
-	private void sendMessage(long chatId, String text) {
-		SendMessage message = new SendMessage();
-		message.setChatId(chatId);
-		message.setText(text);
-		try {
-			execute(message);
-		} catch (TelegramApiException e) {
-			logger.error("Error sending message: " + e.getMessage(), e);
 		}
 	}
 
@@ -222,13 +229,13 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 					prioridadId = Long.parseLong(prioridadIdStr);
 				}
 			} catch (NumberFormatException e) {
-				sendMessage(chatId, "Error: Priority ID must be a valid number.");
+				sendMessageWithRetry(chatId, "Error: Priority ID must be a valid number.", null);
 				return;
 			}
 
 			// Validate estimated time
 			if (estimatedTime > 4.0) {
-				sendMessage(chatId, "Error: Estimated time cannot exceed 4 hours. Please break down the task into smaller subtasks.");
+				sendMessageWithRetry(chatId, "Error: Estimated time cannot exceed 4 hours. Please break down the task into smaller subtasks.", null);
 				return;
 			}
 
@@ -236,15 +243,15 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 			Tarea tarea = tareaService.createTarea(title, description, estimatedTime, proyectoId, tipo, prioridadId);
 
 			if (tarea != null) {
-				sendMessage(chatId, "Task created successfully!\nID: " + tarea.getId());
+				sendMessageWithRetry(chatId, "Task created successfully!\nID: " + tarea.getId(), null);
 			} else {
-				sendMessage(chatId, "Error creating task. Please try again.");
+				sendMessageWithRetry(chatId, "Error creating task. Please try again.", null);
 			}
 		} catch (NumberFormatException e) {
-			sendMessage(chatId, "Error: Please ensure all numeric fields (Estimated Time, Project ID) are valid numbers.");
+			sendMessageWithRetry(chatId, "Error: Please ensure all numeric fields (Estimated Time, Project ID) are valid numbers.", null);
 		} catch (Exception e) {
 			logger.error("Error creating task: " + e.getMessage(), e);
-			sendMessage(chatId, "Error creating task: " + e.getMessage());
+			sendMessageWithRetry(chatId, "Error creating task: " + e.getMessage(), null);
 		}
 	}
 
@@ -259,18 +266,18 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 				// Then update the task's estado_id to 1
 				tarea = tareaService.updateTask(taskId, null, null, null, 1L, null, null, null, null, null);
 				if (tarea != null) {
-					sendMessage(chatId, "User assigned successfully to task " + taskId + " and task status updated to 'In Progress'");
+					sendMessageWithRetry(chatId, "User assigned successfully to task " + taskId + " and task status updated to 'In Progress'", null);
 				} else {
-					sendMessage(chatId, "Error updating task status. User was assigned but status update failed.");
+					sendMessageWithRetry(chatId, "Error updating task status. User was assigned but status update failed.", null);
 				}
 			} else {
-				sendMessage(chatId, "Error assigning user. Task or user not found.");
+				sendMessageWithRetry(chatId, "Error assigning user. Task or user not found.", null);
 			}
 		} catch (NumberFormatException e) {
-			sendMessage(chatId, "Error: Please ensure Task ID and User ID are valid numbers.");
+			sendMessageWithRetry(chatId, "Error: Please ensure Task ID and User ID are valid numbers.", null);
 		} catch (Exception e) {
 			logger.error("Error assigning user: " + e.getMessage(), e);
-			sendMessage(chatId, "Error assigning user: " + e.getMessage());
+			sendMessageWithRetry(chatId, "Error assigning user: " + e.getMessage(), null);
 		}
 	}
 
@@ -281,15 +288,15 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 
 			Tarea tarea = tareaService.assignSprint(taskId, sprintId);
 			if (tarea != null) {
-				sendMessage(chatId, "Sprint assigned successfully to task " + taskId);
+				sendMessageWithRetry(chatId, "Sprint assigned successfully to task " + taskId, null);
 			} else {
-				sendMessage(chatId, "Error assigning sprint. Task or sprint not found.");
+				sendMessageWithRetry(chatId, "Error assigning sprint. Task or sprint not found.", null);
 			}
 		} catch (NumberFormatException e) {
-			sendMessage(chatId, "Error: Please ensure Task ID and Sprint ID are valid numbers.");
+			sendMessageWithRetry(chatId, "Error: Please ensure Task ID and Sprint ID are valid numbers.", null);
 		} catch (Exception e) {
 			logger.error("Error assigning sprint: " + e.getMessage(), e);
-			sendMessage(chatId, "Error assigning sprint: " + e.getMessage());
+			sendMessageWithRetry(chatId, "Error assigning sprint: " + e.getMessage(), null);
 		}
 	}
 
@@ -300,15 +307,15 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 
 			Tarea tarea = tareaService.completeTask(taskId, actualTime);
 			if (tarea != null) {
-				sendMessage(chatId, "Task " + taskId + " marked as completed!");
+				sendMessageWithRetry(chatId, "Task " + taskId + " marked as completed!", null);
 			} else {
-				sendMessage(chatId, "Error completing task. Task not found.");
+				sendMessageWithRetry(chatId, "Error completing task. Task not found.", null);
 			}
 		} catch (NumberFormatException e) {
-			sendMessage(chatId, "Error: Please ensure Task ID and Actual Time are valid numbers.");
+			sendMessageWithRetry(chatId, "Error: Please ensure Task ID and Actual Time are valid numbers.", null);
 		} catch (Exception e) {
 			logger.error("Error completing task: " + e.getMessage(), e);
-			sendMessage(chatId, "Error completing task: " + e.getMessage());
+			sendMessageWithRetry(chatId, "Error completing task: " + e.getMessage(), null);
 		}
 	}
 
@@ -342,7 +349,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 						tiempoEstimado = Double.parseDouble(tiempoEstimadoStr);
 					}
 				} catch (NumberFormatException e) {
-					sendMessage(chatId, "Error: Estimated Time must be a valid number.");
+					sendMessageWithRetry(chatId, "Error: Estimated Time must be a valid number.", null);
 					return;
 				}
 			}
@@ -353,7 +360,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 						estadoId = Long.parseLong(estadoIdStr);
 					}
 				} catch (NumberFormatException e) {
-					sendMessage(chatId, "Error: Estado ID must be a valid number.");
+					sendMessageWithRetry(chatId, "Error: Estado ID must be a valid number.", null);
 					return;
 				}
 			}
@@ -364,7 +371,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 						prioridadId = Long.parseLong(prioridadIdStr);
 					}
 				} catch (NumberFormatException e) {
-					sendMessage(chatId, "Error: Priority ID must be a valid number.");
+					sendMessageWithRetry(chatId, "Error: Priority ID must be a valid number.", null);
 					return;
 				}
 			}
@@ -375,7 +382,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 						proyectoId = Long.parseLong(proyectoIdStr);
 					}
 				} catch (NumberFormatException e) {
-					sendMessage(chatId, "Error: Project ID must be a valid number.");
+					sendMessageWithRetry(chatId, "Error: Project ID must be a valid number.", null);
 					return;
 				}
 			}
@@ -386,7 +393,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 						sprintId = Long.parseLong(sprintIdStr);
 					}
 				} catch (NumberFormatException e) {
-					sendMessage(chatId, "Error: Sprint ID must be a valid number.");
+					sendMessageWithRetry(chatId, "Error: Sprint ID must be a valid number.", null);
 					return;
 				}
 			}
@@ -397,7 +404,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 						tiempoReal = Double.parseDouble(tiempoRealStr);
 					}
 				} catch (NumberFormatException e) {
-					sendMessage(chatId, "Error: Actual Time must be a valid number.");
+					sendMessageWithRetry(chatId, "Error: Actual Time must be a valid number.", null);
 					return;
 				}
 			}
@@ -410,15 +417,15 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 												tiempoReal, tipo);
 
 			if (tarea != null) {
-				sendMessage(chatId, "Task " + taskId + " updated successfully!");
+				sendMessageWithRetry(chatId, "Task " + taskId + " updated successfully!", null);
 			} else {
-				sendMessage(chatId, "Error updating task. Task not found.");
+				sendMessageWithRetry(chatId, "Error updating task. Task not found.", null);
 			}
 		} catch (NumberFormatException e) {
-			sendMessage(chatId, "Error: Please ensure Task ID is a valid number.");
+			sendMessageWithRetry(chatId, "Error: Please ensure Task ID is a valid number.", null);
 		} catch (Exception e) {
 			logger.error("Error updating task: " + e.getMessage(), e);
-			sendMessage(chatId, "Error updating task: " + e.getMessage());
+			sendMessageWithRetry(chatId, "Error updating task: " + e.getMessage(), null);
 		}
 	}
 
@@ -428,7 +435,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 			logger.info("Found {} tasks in the database", tasks.size());
 			
 			if (tasks.isEmpty()) {
-				sendMessage(chatId, "No tasks found in the database. Please check if there are tasks in the TAREAS table.");
+				sendMessageWithRetry(chatId, "No tasks found in the database. Please check if there are tasks in the TAREAS table.", null);
 				return;
 			}
 			
@@ -448,10 +455,10 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 					   .append("\nAssigned to: ").append(task[6] != null ? task[6] : "Not assigned")
 					   .append("\n\n");
 			}
-			sendMessage(chatId, message.toString());
+			sendMessageWithRetry(chatId, message.toString(), null);
 		} catch (Exception e) {
 			logger.error("Error showing all tasks: " + e.getMessage(), e);
-			sendMessage(chatId, "Error retrieving tasks: " + e.getMessage());
+			sendMessageWithRetry(chatId, "Error retrieving tasks: " + e.getMessage(), null);
 		}
 	}
 
@@ -461,7 +468,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 			logger.info("Found {} sprints in the database", sprintsWithTasks.size());
 			
 			if (sprintsWithTasks.isEmpty()) {
-				sendMessage(chatId, "No sprints found in the database.");
+				sendMessageWithRetry(chatId, "No sprints found in the database.", null);
 				return;
 			}
 			
@@ -498,10 +505,160 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 				}
 			}
 			
-			sendMessage(chatId, message.toString());
+			sendMessageWithRetry(chatId, message.toString(), null);
 		} catch (Exception e) {
 			logger.error("Error showing sprint tasks: " + e.getMessage(), e);
-			sendMessage(chatId, "Error retrieving sprint tasks: " + e.getMessage());
+			sendMessageWithRetry(chatId, "Error retrieving sprint tasks: " + e.getMessage(), null);
+		}
+	}
+
+	private void handleAuthentication(long chatId, String email, String password) {
+		try {
+			Optional<Usuario> usuario = usuarioService.findByEmail(email);
+			if (usuario.isPresent() && usuario.get().getPasswordHash().equals(password)) {
+				String role = usuario.get().getRol();
+				userRoles.put(chatId, role);
+				if (role.equals("administrador")) {
+					showAdminMenu(chatId);
+				} else {
+					showUserMenu(chatId);
+				}
+			} else {
+				sendMessageWithRetry(chatId, "Authentication failed. Please check your email and password.", null);
+				showMainMenu(chatId);
+			}
+		} catch (Exception e) {
+			logger.error("Error during authentication: {}", e.getMessage());
+			sendMessageWithRetry(chatId, "An error occurred during authentication. Please try again.", null);
+			showMainMenu(chatId);
+		}
+	}
+
+	private void showAdminMenu(long chatId) {
+		ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
+		List<KeyboardRow> keyboard = new ArrayList<>();
+		KeyboardRow row1 = new KeyboardRow();
+		row1.add("➕ Add Task");
+		row1.add("📋 List Tasks");
+		keyboard.add(row1);
+		KeyboardRow row2 = new KeyboardRow();
+		row2.add("👥 Assign User");
+		row2.add("📅 Assign Sprint");
+		keyboard.add(row2);
+		KeyboardRow row3 = new KeyboardRow();
+		row3.add("✅ Complete Task");
+		row3.add("✏️ Edit Task");
+		keyboard.add(row3);
+		KeyboardRow row4 = new KeyboardRow();
+		row4.add("📊 Show Sprint");
+		row4.add("❓ Help");
+		keyboard.add(row4);
+		KeyboardRow row5 = new KeyboardRow();
+		row5.add("❌ Hide");
+		keyboard.add(row5);
+		keyboardMarkup.setKeyboard(keyboard);
+		keyboardMarkup.setResizeKeyboard(true);
+		keyboardMarkup.setOneTimeKeyboard(false);
+		keyboardMarkup.setSelective(true);
+
+		sendMessageWithRetry(chatId, "Welcome, Administrator! Please select an option:", keyboardMarkup);
+	}
+
+	private void showUserMenu(long chatId) {
+		ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
+		List<KeyboardRow> keyboard = new ArrayList<>();
+		KeyboardRow row1 = new KeyboardRow();
+		row1.add("📋 List Tasks");
+		row1.add("📊 Show Sprint");
+		keyboard.add(row1);
+		KeyboardRow row2 = new KeyboardRow();
+		row2.add("✅ Complete Task");
+		row2.add("❓ Help");
+		keyboard.add(row2);
+		KeyboardRow row3 = new KeyboardRow();
+		row3.add("❌ Hide");
+		keyboard.add(row3);
+		keyboardMarkup.setKeyboard(keyboard);
+		keyboardMarkup.setResizeKeyboard(true);
+		keyboardMarkup.setOneTimeKeyboard(false);
+		keyboardMarkup.setSelective(true);
+
+		sendMessageWithRetry(chatId, "Welcome! Please select an option:", keyboardMarkup);
+	}
+
+	private void handleAuthenticatedCommand(long chatId, String messageText) {
+		String role = userRoles.get(chatId);
+		if (role == null) {
+			showMainMenu(chatId);
+			return;
+		}
+
+		if (role.equals("administrador")) {
+			handleAdminCommand(chatId, messageText);
+		} else {
+			handleUserCommand(chatId, messageText);
+		}
+	}
+
+	private void handleAdminCommand(long chatId, String messageText) {
+		// Handle admin commands
+		if (messageText.equals("➕ Add Task")) {
+			sendMessageWithRetry(chatId, "Please provide task details in the following format:\n" +
+								  "Title: [task title]\n" +
+								  "Description: [task description] (optional)\n" +
+								  "Estimated Time: [hours]\n" +
+								  "Project ID: [project id]\n" +
+								  "Type: [Bug/Feature/Improvement]\n" +
+								  "Priority ID: [priority id] (optional)", null);
+		} else if (messageText.equals("📋 List Tasks")) {
+			showAllTasks(chatId);
+		} else if (messageText.equals("👥 Assign User")) {
+			sendMessageWithRetry(chatId, "Please provide assignment details:\n" +
+								  "Task ID: [task id]\n" +
+								  "User ID: [user id]", null);
+		} else if (messageText.equals("📅 Assign Sprint")) {
+			sendMessageWithRetry(chatId, "Please provide sprint assignment details:\n" +
+								  "Task ID: [task id]\n" +
+								  "Sprint ID: [sprint id]", null);
+		} else if (messageText.equals("✅ Complete Task")) {
+			sendMessageWithRetry(chatId, "Please provide completion details:\n" +
+								  "Task ID: [task id]\n" +
+								  "Actual Time: [hours]", null);
+		} else if (messageText.equals("✏️ Edit Task")) {
+			sendMessageWithRetry(chatId, "Please provide task details to update (only include fields you want to change):\n" +
+								  "Task ID: [task id]\n" +
+								  "Title: [new title]\n" +
+								  "Description: [new description]\n" +
+								  "Estimated Time: [new hours]\n" +
+								  "Estado ID: [new estado id]\n" +
+								  "Priority ID: [new priority id]\n" +
+								  "Project ID: [new project id]\n" +
+								  "Sprint ID: [new sprint id]\n" +
+								  "Actual Time: [new hours]\n" +
+								  "Type: [new type]", null);
+		} else if (messageText.equals("📊 Show Sprint")) {
+			showCurrentSprintTasks(chatId);
+		} else if (messageText.equals("❌ Hide")) {
+			hideKeyboard(chatId);
+		} else {
+			showAdminMenu(chatId);
+		}
+	}
+
+	private void handleUserCommand(long chatId, String messageText) {
+		// Handle user commands
+		if (messageText.equals("📋 List Tasks")) {
+			showAllTasks(chatId);
+		} else if (messageText.equals("📊 Show Sprint")) {
+			showCurrentSprintTasks(chatId);
+		} else if (messageText.equals("✅ Complete Task")) {
+			sendMessageWithRetry(chatId, "Please provide completion details:\n" +
+								  "Task ID: [task id]\n" +
+								  "Actual Time: [hours]", null);
+		} else if (messageText.equals("❌ Hide")) {
+			hideKeyboard(chatId);
+		} else {
+			showUserMenu(chatId);
 		}
 	}
 
