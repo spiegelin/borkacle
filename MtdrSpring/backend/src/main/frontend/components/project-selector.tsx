@@ -17,8 +17,8 @@ interface Project {
   id: string
   name: string
   description: string
-  startDate: Date
-  endDate: Date
+  startDate: Date | undefined
+  endDate: Date | undefined
   identifier: string
 }
 
@@ -68,13 +68,19 @@ export function ProjectSelector() {
     },
   ])
 
-  const handleCreateProject = (newProject: Omit<Project, "id">) => {
-    const projectWithId = {
-      ...newProject,
+  const handleCreateProject = (project: {
+    name: string
+    description: string
+    startDate: Date | undefined
+    endDate: Date | undefined
+    identifier: string
+  }) => {
+    const projectWithId: Project = {
+      ...project,
       id: (projects.length + 1).toString(),
     }
     setProjects([...projects, projectWithId])
-    setCurrentProject(newProject.name)
+    setCurrentProject(project.name)
   }
 
   return (
@@ -100,7 +106,7 @@ export function ProjectSelector() {
           ))}
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => setCreateProjectOpen(true)}>
-            <span className="text-[#F7630C]">+ Create new project</span>
+            <span className="text-[#C74634]">+ Create new project</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

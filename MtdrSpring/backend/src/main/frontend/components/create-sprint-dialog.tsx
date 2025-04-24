@@ -88,7 +88,7 @@ export function CreateSprintDialog({ open, setOpen }: CreateSprintDialogProps) {
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          <Button onClick={() => setOpen(false)} className="bg-[#F7630C] hover:bg-[#E25A00]">
+          <Button onClick={() => setOpen(false)} className="bg-[#C74634] hover:bg-[#b03d2e]">
             Create Sprint
           </Button>
         </DialogFooter>

@@ -9,7 +9,7 @@ export default function LandingPage() {
       <header className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-10 w-10 rounded-md bg-[#F7630C] flex items-center justify-center text-white font-bold text-xl">
+            <div className="h-10 w-10 rounded-md bg-[#C74634] flex items-center justify-center text-white font-bold text-xl">
               O
             </div>
             <div className="font-semibold text-xl text-[#3A3A3A]">Oracle Cloud Tasks</div>
@@ -19,7 +19,7 @@ export default function LandingPage() {
               <Button variant="outline">Log In</Button>
             </Link>
             <Link href="/" passHref>
-              <Button className="bg-[#F7630C] hover:bg-[#E25A00]">Sign Up</Button>
+              <Button className="bg-[#C74634] hover:bg-[#b03d2e]">Sign Up</Button>
             </Link>
           </div>
         </div>
@@ -39,7 +39,7 @@ export default function LandingPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/" passHref>
-                  <Button size="lg" className="bg-[#F7630C] hover:bg-[#E25A00]">
+                  <Button size="lg" className="bg-[#C74634] hover:bg-[#b03d2e]">
                     Get Started
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
@@ -76,7 +76,7 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-3 gap-8">
             <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-              <div className="h-12 w-12 rounded-full bg-orange-100 flex items-center justify-center text-[#F7630C] mb-4">
+              <div className="h-12 w-12 rounded-full bg-orange-100 flex items-center justify-center text-[#C74634] mb-4">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -165,7 +165,7 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/" passHref>
-              <Button size="lg" className="bg-[#F7630C] hover:bg-[#E25A00]">
+              <Button size="lg" className="bg-[#C74634] hover:bg-[#b03d2e]">
                 Start Free Trial
               </Button>
             </Link>
@@ -184,7 +184,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="h-8 w-8 rounded-md bg-[#F7630C] flex items-center justify-center text-white font-bold">
+                <div className="h-8 w-8 rounded-md bg-[#C74634] flex items-center justify-center text-white font-bold">
                   O
                 </div>
                 <div className="font-semibold text-white">Oracle Cloud Tasks</div>
@@ -196,10 +196,53 @@ export default function LandingPage() {
             </div>
             <div>
               <h3 className="font-semibold text-lg mb-4">Product</h3>
+              <ul className="space-y-2">
+                <li>
+                  <a href="#" className="text-gray-300 hover:text-white">
+                    Features
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-300 hover:text-white">
+                    Pricing
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-300 hover:text-white">
+                    Integrations
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-300 hover:text-white">
+                    Roadmap
+                  </a>
+                </li>
+              </ul>
             </div>
             <div>
               <h3 className="font-semibold text-lg mb-4">Resources</h3>
-              
+              <ul className="space-y-2">
+                <li>
+                  <a href="#" className="text-gray-300 hover:text-white">
+                    Documentation
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-300 hover:text-white">
+                    Tutorials
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-300 hover:text-white">
+                    Blog
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-300 hover:text-white">
+                    Support
+                  </a>
+                </li>
+              </ul>
             </div>
             <div>
               <h3 className="font-semibold text-lg mb-4">Company</h3>
