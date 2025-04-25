@@ -64,18 +64,27 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 			String messageText = update.getMessage().getText();
 
 			try {
+				logger.info("Recibido mensaje: '{}' desde chatId: {}", messageText, chatId);
+				
 				if (messageText.equals("/start")) {
 					showMainMenu(chatId);
 				} else if (messageText.equals("❓ Help")) {
 					sendMessageWithRetry(chatId, BotMessages.HELP_MESSAGE.getMessage(), null);
 				} else if (messageText.equals("➕ Add Task")) {
-					sendMessageWithRetry(chatId, "Please provide task details in the following format:\n" +
-												  "Title: [task title]\n" +
-												  "Description: [task description] (optional)\n" +
-												  "Estimated Time: [hours]\n" +
-												  "Project ID: [project id]\n" +
-												  "Type: [Bug/Feature/Improvement]\n" +
-												  "Priority ID: [priority id] (optional)", null);
+					String helpMessage = "Por favor proporcione los detalles de la tarea *exactamente* en el siguiente formato:\n\n" +
+										 "Title: Nombre de la tarea\n" +
+										 "Description: Descripción detallada\n" +
+										 "Estimated Time: 2.5\n" +
+										 "Project ID: 1\n" +
+										 "Priority ID: 2\n\n" +
+										 "⚠️ Es importante mantener este formato exacto, con cada campo en una línea separada y seguido de dos puntos (:)\n\n" +
+										 "📋 Aquí tienes un ejemplo que puedes copiar y pegar (modifica los valores):\n\n" +
+										 "Title: Nueva tarea de prueba\n" +
+										 "Description: Esta es una descripción de prueba\n" +
+										 "Estimated Time: 1.5\n" +
+										 "Project ID: 1\n" +
+										 "Priority ID: 1";
+					sendMessageWithRetry(chatId, helpMessage, null);
 				} else if (messageText.equals("📋 List Tasks")) {
 					showAllTasks(chatId);
 				} else if (messageText.equals("👥 Assign User")) {
@@ -100,8 +109,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 												  "Priority ID: [new priority id]\n" +
 												  "Project ID: [new project id]\n" +
 												  "Sprint ID: [new sprint id]\n" +
-												  "Actual Time: [new hours]\n" +
-												  "Type: [new type]", null);
+												  "Actual Time: [new hours]", null);
 				} else if (messageText.equals("📊 Show Sprint")) {
 					showCurrentSprintTasks(chatId);
 				} else if (messageText.equals("❌ Hide")) {
@@ -123,7 +131,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 				} else {
 					// Handle task creation based on message format
 					if (messageText.contains("Title:") && messageText.contains("Estimated Time:") && 
-						messageText.contains("Project ID:") && messageText.contains("Type:")) {
+						messageText.contains("Project ID:")) {
 						handleTaskCreation(chatId, messageText);
 					} else if (messageText.contains("Task ID:") && messageText.contains("User ID:")) {
 						handleUserAssignment(chatId, messageText);
@@ -135,12 +143,12 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 						messageText.contains("Description:") || messageText.contains("Estimated Time:") ||
 						messageText.contains("Estado ID:") || messageText.contains("Priority ID:") ||
 						messageText.contains("Project ID:") || messageText.contains("Sprint ID:") ||
-						messageText.contains("Actual Time:") || messageText.contains("Type:"))) {
+						messageText.contains("Actual Time:"))) {
 						handleTaskUpdate(chatId, messageText);
 					}
 				}
 			} catch (Exception e) {
-				logger.error("Error processing update: {}", e.getMessage());
+				logger.error("Error processing update: {}", e.getMessage(), e);
 				sendMessageWithRetry(chatId, "An error occurred. Please try again.", null);
 				showMainMenu(chatId);
 			}
@@ -205,32 +213,72 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 	}
 
 	private String extractValue(String message, String field) {
-		int startIndex = message.indexOf(field) + field.length();
-		int endIndex = message.indexOf("\n", startIndex);
-		if (endIndex == -1) {
-			endIndex = message.length();
+		try {
+			logger.debug("Extrayendo campo '{}' del mensaje", field);
+			if (!message.contains(field)) {
+				logger.debug("Campo '{}' no encontrado en el mensaje", field);
+				return "";
+			}
+			
+			int startIndex = message.indexOf(field) + field.length();
+			int endIndex = message.indexOf("\n", startIndex);
+			if (endIndex == -1) {
+				endIndex = message.length();
+			}
+			
+			String value = message.substring(startIndex, endIndex).trim();
+			logger.debug("Valor extraído para '{}': '{}'", field, value);
+			return value;
+		} catch (Exception e) {
+			logger.error("Error al extraer el valor para el campo '{}': {}", field, e.getMessage());
+			return "";
 		}
-		return message.substring(startIndex, endIndex).trim();
 	}
 
 	private void handleTaskCreation(long chatId, String messageText) {
 		try {
+			logger.info("Iniciando creación de tarea con mensaje: {}", messageText);
+			
 			// Parse task details from message
 			String title = extractValue(messageText, "Title:");
 			String description = extractValue(messageText, "Description:");
-			Double estimatedTime = Double.parseDouble(extractValue(messageText, "Estimated Time:"));
-			Long proyectoId = Long.parseLong(extractValue(messageText, "Project ID:"));
-			String tipo = extractValue(messageText, "Type:");
-			Long prioridadId = null;
+			String estimatedTimeStr = extractValue(messageText, "Estimated Time:");
+			String proyectoIdStr = extractValue(messageText, "Project ID:");
+			String prioridadIdStr = extractValue(messageText, "Priority ID:");
 			
-			try {
-				String prioridadIdStr = extractValue(messageText, "Priority ID:");
-				if (!prioridadIdStr.isEmpty()) {
-					prioridadId = Long.parseLong(prioridadIdStr);
-				}
-			} catch (NumberFormatException e) {
-				sendMessageWithRetry(chatId, "Error: Priority ID must be a valid number.", null);
+			logger.info("Datos extraídos - Título: {}, Descripción: {}, Tiempo Estimado: {}, Proyecto ID: {}, Prioridad ID: {}", 
+					   title, description, estimatedTimeStr, proyectoIdStr, prioridadIdStr);
+			
+			// Validar que los campos requeridos no estén vacíos
+			if (title.isEmpty()) {
+				sendMessageWithRetry(chatId, "Error: El título no puede estar vacío.", null);
 				return;
+			}
+			
+			Double estimatedTime = null;
+			try {
+				estimatedTime = Double.parseDouble(estimatedTimeStr);
+			} catch (NumberFormatException e) {
+				sendMessageWithRetry(chatId, "Error: El tiempo estimado debe ser un número válido.", null);
+				return;
+			}
+			
+			Long proyectoId = null;
+			try {
+				proyectoId = Long.parseLong(proyectoIdStr);
+			} catch (NumberFormatException e) {
+				sendMessageWithRetry(chatId, "Error: El ID del proyecto debe ser un número válido.", null);
+				return;
+			}
+			
+			Long prioridadId = null;
+			if (!prioridadIdStr.isEmpty()) {
+				try {
+					prioridadId = Long.parseLong(prioridadIdStr);
+				} catch (NumberFormatException e) {
+					sendMessageWithRetry(chatId, "Error: Priority ID must be a valid number.", null);
+					return;
+				}
 			}
 
 			// Validate estimated time
@@ -239,18 +287,24 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 				return;
 			}
 
+			logger.info("Creando tarea con datos validados: Título={}, Tiempo={}, ProyectoID={}, PrioridadID={}", 
+						estimatedTime, proyectoId, prioridadId);
+			
 			// Create task
-			Tarea tarea = tareaService.createTarea(title, description, estimatedTime, proyectoId, tipo, prioridadId);
+			Tarea tarea = tareaService.createTarea(title, description, estimatedTime, proyectoId, prioridadId);
 
 			if (tarea != null) {
+				logger.info("Tarea creada exitosamente con ID: {}", tarea.getId());
 				sendMessageWithRetry(chatId, "Task created successfully!\nID: " + tarea.getId(), null);
 			} else {
+				logger.error("Error al crear la tarea: tareaService.createTarea devolvió null");
 				sendMessageWithRetry(chatId, "Error creating task. Please try again.", null);
 			}
 		} catch (NumberFormatException e) {
+			logger.error("Error de formato numérico: {}", e.getMessage());
 			sendMessageWithRetry(chatId, "Error: Please ensure all numeric fields (Estimated Time, Project ID) are valid numbers.", null);
 		} catch (Exception e) {
-			logger.error("Error creating task: " + e.getMessage(), e);
+			logger.error("Error creating task: {}", e.getMessage(), e);
 			sendMessageWithRetry(chatId, "Error creating task: " + e.getMessage(), null);
 		}
 	}
@@ -264,7 +318,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 			Tarea tarea = tareaService.assignUser(taskId, userId);
 			if (tarea != null) {
 				// Then update the task's estado_id to 1
-				tarea = tareaService.updateTask(taskId, null, null, null, 1L, null, null, null, null, null);
+				tarea = tareaService.updateTask(taskId, null, null, null, 1L, null, null, null, null);
 				if (tarea != null) {
 					sendMessageWithRetry(chatId, "User assigned successfully to task " + taskId + " and task status updated to 'In Progress'", null);
 				} else {
@@ -333,7 +387,6 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 			Long proyectoId = null;
 			Long sprintId = null;
 			Double tiempoReal = null;
-			String tipo = null;
 
 			// Only parse fields that are present in the message
 			if (messageText.contains("Title:")) {
@@ -408,13 +461,10 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 					return;
 				}
 			}
-			if (messageText.contains("Type:")) {
-				tipo = extractValue(messageText, "Type:");
-			}
 
 			Tarea tarea = tareaService.updateTask(taskId, titulo, descripcion, tiempoEstimado,
 												estadoId, prioridadId, proyectoId, sprintId,
-												tiempoReal, tipo);
+												tiempoReal);
 
 			if (tarea != null) {
 				sendMessageWithRetry(chatId, "Task " + taskId + " updated successfully!", null);
@@ -444,15 +494,9 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 				message.append("ID: ").append(task[0])
 					   .append("\nTitle: ").append(task[1])
 					   .append("\nDescription: ").append(task[2] != null ? task[2] : "")
-					   .append("\nCreated: ").append(task[3]);
-				
-				// Only show type if it's not null
-				if (task[4] != null) {
-					message.append("\nType: ").append(task[4]);
-				}
-				
-				message.append("\nStatus: ").append(task[5])
-					   .append("\nAssigned to: ").append(task[6] != null ? task[6] : "Not assigned")
+					   .append("\nCreated: ").append(task[3])
+					   .append("\nStatus: ").append(task[4])
+					   .append("\nAssigned to: ").append(task[5] != null ? task[5] : "Not assigned")
 					   .append("\n\n");
 			}
 			sendMessageWithRetry(chatId, message.toString(), null);
@@ -515,13 +559,20 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 	private void handleAuthentication(long chatId, String email, String password) {
 		try {
 			Optional<Usuario> usuario = usuarioService.findByEmail(email);
-			if (usuario.isPresent() && usuario.get().getPasswordHash().equals(password)) {
-				String role = usuario.get().getRol();
-				userRoles.put(chatId, role);
-				if (role.equals("administrador")) {
-					showAdminMenu(chatId);
+			if (usuario.isPresent()) {
+				// Use BCrypt's matches method to verify the password against the stored hash
+				boolean passwordMatches = verifyPassword(password, usuario.get().getPasswordHash());
+				if (passwordMatches) {
+					String role = usuario.get().getRol();
+					userRoles.put(chatId, role);
+					if (role.equals("administrador")) {
+						showAdminMenu(chatId);
+					} else {
+						showUserMenu(chatId);
+					}
 				} else {
-					showUserMenu(chatId);
+					sendMessageWithRetry(chatId, "Authentication failed. Please check your email and password.", null);
+					showMainMenu(chatId);
 				}
 			} else {
 				sendMessageWithRetry(chatId, "Authentication failed. Please check your email and password.", null);
@@ -531,6 +582,19 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 			logger.error("Error during authentication: {}", e.getMessage());
 			sendMessageWithRetry(chatId, "An error occurred during authentication. Please try again.", null);
 			showMainMenu(chatId);
+		}
+	}
+
+	// Add a method to verify the password against a stored hash
+	private boolean verifyPassword(String rawPassword, String storedHash) {
+		try {
+			// Use Spring's BCrypt password encoder to verify the password
+			org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder encoder = 
+				new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+			return encoder.matches(rawPassword, storedHash);
+		} catch (Exception e) {
+			logger.error("Error verifying password: {}", e.getMessage());
+			return false;
 		}
 	}
 
@@ -603,13 +667,20 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 	private void handleAdminCommand(long chatId, String messageText) {
 		// Handle admin commands
 		if (messageText.equals("➕ Add Task")) {
-			sendMessageWithRetry(chatId, "Please provide task details in the following format:\n" +
-								  "Title: [task title]\n" +
-								  "Description: [task description] (optional)\n" +
-								  "Estimated Time: [hours]\n" +
-								  "Project ID: [project id]\n" +
-								  "Type: [Bug/Feature/Improvement]\n" +
-								  "Priority ID: [priority id] (optional)", null);
+			String helpMessage = "Por favor proporcione los detalles de la tarea *exactamente* en el siguiente formato:\n\n" +
+								 "Title: Nombre de la tarea\n" +
+								 "Description: Descripción detallada\n" +
+								 "Estimated Time: 2.5\n" +
+								 "Project ID: 1\n" +
+								 "Priority ID: 2\n\n" +
+								 "⚠️ Es importante mantener este formato exacto, con cada campo en una línea separada y seguido de dos puntos (:)\n\n" +
+								 "📋 Aquí tienes un ejemplo que puedes copiar y pegar (modifica los valores):\n\n" +
+								 "Title: Nueva tarea de prueba\n" +
+								 "Description: Esta es una descripción de prueba\n" +
+								 "Estimated Time: 1.5\n" +
+								 "Project ID: 1\n" +
+								 "Priority ID: 1";
+			sendMessageWithRetry(chatId, helpMessage, null);
 		} else if (messageText.equals("📋 List Tasks")) {
 			showAllTasks(chatId);
 		} else if (messageText.equals("👥 Assign User")) {
@@ -634,8 +705,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 								  "Priority ID: [new priority id]\n" +
 								  "Project ID: [new project id]\n" +
 								  "Sprint ID: [new sprint id]\n" +
-								  "Actual Time: [new hours]\n" +
-								  "Type: [new type]", null);
+								  "Actual Time: [new hours]", null);
 		} else if (messageText.equals("📊 Show Sprint")) {
 			showCurrentSprintTasks(chatId);
 		} else if (messageText.equals("❌ Hide")) {

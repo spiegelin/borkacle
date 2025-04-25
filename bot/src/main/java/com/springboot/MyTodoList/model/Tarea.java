@@ -48,9 +48,6 @@ public class Tarea {
     @Column(name = "TIEMPO_REAL")
     private Double tiempoReal;
 
-    @Column(name = "TIPO")
-    private String tipo;
-
     // Getters and Setters
     public Long getId() {
         return id;
@@ -146,13 +143,5 @@ public class Tarea {
 
     public void setTiempoReal(Double tiempoReal) {
         this.tiempoReal = tiempoReal;
-    }
-
-    public String getTipo() {
-        return tipo;
-    }
-
-    public void setTipo(String tipo) {
-        this.tipo = tipo;
     }
 } 
