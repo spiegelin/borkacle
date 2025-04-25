@@ -26,13 +26,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { CreateTaskDialog } from "@/components/create-task-dialog"
 import { SortableTask } from "@/components/sortable-task"
+import api from "@/lib/api"
 
 interface Task {
   id: string
   title: string
   type: "bug" | "task" | "story" | "epic"
   priority: "highest" | "high" | "medium" | "low" | "lowest"
-  status: "todo" | "inProgress" | "review" | "done"
+  status: "todo" | "inProgress" | "review" | "done" | "blocked" | "cancelled"
   assignee?: {
     name: string
     avatar?: string
@@ -50,79 +51,56 @@ interface Columns {
   [key: string]: Column
 }
 
+// Mapeo de IDs de estado a nombres de columnas
+const columnTitles = {
+  todo: "Pendiente",
+  inProgress: "En Proceso",
+  review: "En Revisión",
+  blocked: "Bloqueado",
+  done: "Completado",
+  cancelled: "Cancelado"
+}
+
+// Columnas por defecto en caso de error o para inicialización
 const defaultColumns: Columns = {
   todo: {
     id: "todo",
-    title: "To Do",
-    tasks: [
-      { id: "ORA-2345", title: "Initial prototype for each microservice", type: "task", priority: "high", status: "todo" },
-      {
-        id: "ORA-2346",
-        title: "Resource Planning",
-        type: "story",
-        priority: "low",
-        status: "todo",
-        assignee: { name: "John Doe", initials: "JD" },
-      },
-      { id: "ORA-2347", title: "Requirements Elicitation", type: "task", priority: "high", status: "todo" },
-    ],
+    title: "Pendiente",
+    tasks: [],
   },
   inProgress: {
     id: "inProgress",
-    title: "In Progress",
-    tasks: [
-      {
-        id: "ORA-2348",
-        title: "Stack Design",
-        type: "task",
-        priority: "high",
-        status: "inProgress",
-        assignee: { name: "Sarah Lee", initials: "SL" },
-      },
-    ],
+    title: "En Proceso",
+    tasks: [],
   },
   review: {
     id: "review",
-    title: "Review",
-    tasks: [
-      {
-        id: "ORA-2350",
-        title: "Backend Development",
-        type: "task",
-        priority: "highest",
-        status: "review",
-      },
-      {
-        id: "ORA-2351",
-        title: "Design of frontend routes",
-        type: "story",
-        priority: "high",
-        status: "review",
-        assignee: { name: "Mike Chen", initials: "MC" },
-      },
-    ],
+    title: "En Revisión",
+    tasks: [],
+  },
+  blocked: {
+    id: "blocked",
+    title: "Bloqueado",
+    tasks: [],
   },
   done: {
     id: "done",
-    title: "Done",
-    tasks: [
-      {
-        id: "ORA-2352",
-        title: "UI/UX Design",
-        type: "task",
-        priority: "medium",
-        status: "done",
-        assignee: { name: "John Doe", initials: "JD" },
-      },
-      { id: "ORA-2353", title: "Requirements gathering", type: "story", priority: "high", status: "done" },
-    ],
+    title: "Completado",
+    tasks: [],
   },
+  cancelled: {
+    id: "cancelled",
+    title: "Cancelado",
+    tasks: [],
+  }
 }
 
 export function TaskBoard() {
   const [createTaskOpen, setCreateTaskOpen] = useState(false)
-  const [columns, setColumns] = useState<Columns>({})
+  const [columns, setColumns] = useState<Columns>(defaultColumns)
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -131,22 +109,50 @@ export function TaskBoard() {
     })
   )
 
-  // Carga desde localStorage o establece columns por defecto
+  // Cargar las tareas desde el backend
   useEffect(() => {
-    const storedColumns = localStorage.getItem("columns")
-    if (storedColumns) {
-      setColumns(JSON.parse(storedColumns))
-    } else {
-      setColumns(defaultColumns)
-    }
+    fetchTareas()
   }, [])
 
-  // Guarda automáticamente cada vez que cambien las columnas
-  useEffect(() => {
-    if (Object.keys(columns).length > 0) {
-      localStorage.setItem("columns", JSON.stringify(columns))
+  const fetchTareas = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const response = await api.get('/api/tareas/board')
+      const data = response.data
+      
+      if (data.columns) {
+        // Convertir el formato del backend al formato que espera el componente
+        const newColumns: Columns = {}
+        
+        // Inicializar las columnas con las predeterminadas
+        Object.keys(defaultColumns).forEach(columnKey => {
+          newColumns[columnKey] = {
+            id: columnKey,
+            title: columnTitles[columnKey as keyof typeof columnTitles],
+            tasks: []
+          }
+        })
+        
+        // Llenar con los datos del backend
+        Object.entries(data.columns).forEach(([columnKey, tasks]) => {
+          if (newColumns[columnKey]) {
+            newColumns[columnKey].tasks = tasks as Task[]
+          }
+        })
+        
+        setColumns(newColumns)
+      }
+    } catch (err) {
+      console.error("Error al cargar las tareas:", err)
+      setError("No se pudieron cargar las tareas. Por favor, intenta de nuevo más tarde.")
+      // Usar las columnas por defecto en caso de error
+      setColumns(defaultColumns)
+    } finally {
+      setLoading(false)
     }
-  }, [columns])
+  }
 
   // Recibe la nueva tarea y la agrega en la columna "todo"
   function handleCreateTask(newTask: Task) {
@@ -157,7 +163,7 @@ export function TaskBoard() {
   }
 
   // Mueve la tarea de columna al soltar
-  const onDragEnd = (event: DragEndEvent) => {
+  const onDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
     
     if (!over) {
@@ -212,6 +218,42 @@ export function TaskBoard() {
     
     // Update state
     setColumns(newColumns)
+    
+    // Actualizar el estado en el backend
+    try {
+      // Extraer el ID de la tarea (quitar el prefijo 'ORA-')
+      const taskId = movedTask.id.replace('ORA-', '');
+      
+      // Obtener el ID de estado correspondiente al status del frontend
+      const estadoId = getEstadoIdFromStatus(destinationColumnId);
+      
+      // Llamar al endpoint para actualizar el estado
+      await api.put(`/api/tareas/${taskId}/estado`, {
+        estadoId: estadoId
+      });
+      
+      console.log(`Tarea ${taskId} actualizada al estado ${estadoId} (${destinationColumnId})`);
+    } catch (error) {
+      console.error('Error al actualizar el estado de la tarea:', error);
+      // Opcionalmente: mostrar un mensaje de error al usuario
+      setError("No se pudo actualizar el estado de la tarea. Los cambios podrían no guardarse.");
+      
+      // También podrías deshacer el cambio visual si falla la actualización en el backend
+      // setColumns(prevColumns);
+    }
+  }
+  
+  // Función auxiliar que podría usarse para convertir el status del frontend al ID de estado del backend
+  const getEstadoIdFromStatus = (status: string): number => {
+    switch (status) {
+      case 'inProgress': return 1;
+      case 'todo': return 3;
+      case 'review': return 4;
+      case 'blocked': return 5;
+      case 'done': return 6;
+      case 'cancelled': return 7;
+      default: return 3; // Pendiente como valor predeterminado
+    }
   }
 
   const getPriorityIcon = (priority: Task["priority"]) => {
@@ -274,104 +316,103 @@ export function TaskBoard() {
   const activeTask = getActiveTask()
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-[#3A3A3A]">Task Board</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" className="border-gray-200">
-            Filter
-          </Button>
-          <Button 
-            className="bg-[#C74634] hover:bg-[#b03d2e]"
-            onClick={() => setCreateTaskOpen(true)}
-          >
-            <Plus className="h-4 w-4 mr-1" /> Add Task
-          </Button>
-        </div>
+    <div className="container-fluid px-4 py-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold">Board</h1>
+        <Button onClick={() => setCreateTaskOpen(true)} className="inline-flex items-center">
+          <Plus className="h-4 w-4 mr-2" />
+          New Task
+        </Button>
       </div>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={(event) => setActiveId(event.active.id as string)}
-        onDragEnd={onDragEnd}
-        onDragCancel={() => setActiveId(null)}
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {Object.values(columns).map((column) => (
-            <Card key={column.id} className="bg-gray-50">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-semibold text-[#3A3A3A]">{column.title}</h2>
-                  <span className="text-sm text-gray-500">{column.tasks.length}</span>
-                </div>
-                <SortableContext
-                  items={column.tasks.map((task: Task) => task.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div className="space-y-2 min-h-[200px]">
-                    {column.tasks.map((task: Task) => (
-                      <SortableTask 
-                        key={task.id} 
-                        task={task} 
-                        getPriorityIcon={getPriorityIcon}
-                        getTypeIcon={getTypeIcon}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </CardContent>
-            </Card>
-          ))}
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+          <span className="ml-2 text-gray-600">Cargando tareas...</span>
         </div>
-        
-        <DragOverlay>
-          {activeTask ? (
-            <div className="bg-white p-3 rounded-lg shadow-md">
-              <div className="flex items-start gap-2">
-                <div className="flex items-center gap-1">
-                  {getTypeIcon(activeTask.type)}
-                  {getPriorityIcon(activeTask.priority)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#3A3A3A] truncate">
-                    {activeTask.title}
-                  </p>
-                  {activeTask.assignee && (
-                    <div className="flex items-center gap-1 mt-1">
-                      <Avatar className="h-5 w-5">
-                        {activeTask.assignee.avatar && (
-                          <AvatarImage 
-                            src={activeTask.assignee.avatar} 
-                            alt={activeTask.assignee.name} 
+      ) : error ? (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6">
+          <strong className="font-bold">Error: </strong>
+          <span className="block sm:inline">{error}</span>
+          <button 
+            className="bg-blue-500 text-white px-4 py-2 rounded mt-2"
+            onClick={fetchTareas}
+          >
+            Reintentar
+          </button>
+        </div>
+      ) : (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={(event) => setActiveId(event.active.id as string)}
+          onDragEnd={onDragEnd}
+          onDragCancel={() => setActiveId(null)}
+        >
+          <div className="flex overflow-x-auto pb-6 gap-6" style={{ minHeight: "calc(100vh - 200px)" }}>
+            {Object.values(columns).map((column) => (
+              <Card key={column.id} className="bg-gray-50 flex-shrink-0" style={{ width: "320px" }}>
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="font-semibold text-lg text-[#3A3A3A]">{column.title}</h2>
+                    <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">{column.tasks.length}</span>
+                  </div>
+                  <SortableContext
+                    items={column.tasks.map((task: Task) => task.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-2 min-h-[200px]">
+                      {column.tasks.length === 0 ? (
+                        <div className="text-gray-400 text-center py-4">
+                          No hay tareas en esta columna
+                        </div>
+                      ) : (
+                        column.tasks.map((task: Task) => (
+                          <SortableTask 
+                            key={task.id} 
+                            task={task} 
+                            getPriorityIcon={getPriorityIcon}
+                            getTypeIcon={getTypeIcon}
                           />
-                        )}
-                        <AvatarFallback>
-                          {activeTask.assignee.initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-xs text-gray-500">
-                        {activeTask.assignee.name}
-                      </span>
+                        ))
+                      )}
                     </div>
-                  )}
-                </div>
-                <Button variant="ghost" size="icon" className="h-6 w-6">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+                  </SortableContext>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
 
-      <CreateTaskDialog 
-        open={createTaskOpen} 
-        onOpenChange={setCreateTaskOpen}
-        onCreateTask={handleCreateTask}
-      />
+          <DragOverlay>
+            {activeId && activeTask && (
+              <div className="bg-white p-3 rounded-lg shadow-lg">
+                <div className="flex items-start gap-2">
+                  <div className="flex items-center gap-1">
+                    {getTypeIcon(activeTask.type)}
+                    {getPriorityIcon(activeTask.priority)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[#3A3A3A] truncate">{activeTask.title}</p>
+                    {activeTask.assignee && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <Avatar className="h-5 w-5">
+                          {activeTask.assignee.avatar && (
+                            <AvatarImage src={activeTask.assignee.avatar} alt={activeTask.assignee.name} />
+                          )}
+                          <AvatarFallback>{activeTask.assignee.initials}</AvatarFallback>
+                        </Avatar>
+                        <span className="text-xs text-gray-500">{activeTask.assignee.name}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </DragOverlay>
+        </DndContext>
+      )}
+
+      <CreateTaskDialog open={createTaskOpen} onOpenChange={setCreateTaskOpen} onCreateTask={handleCreateTask} />
     </div>
   )
 }
