@@ -16,7 +16,10 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
-  TooltipProps
+  TooltipProps,
+  PieChart,
+  Pie,
+  Cell
 } from "recharts"
 import api from "@/lib/api"
 
@@ -121,6 +124,9 @@ export function KpiDashboard() {
 
   const teamData = getTeamData()
   const chartData = teamData ? formatSprintData(teamData.sprints) : []
+  
+  // Colores para los gráficos
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A569BD', '#3498DB', '#2ECC71', '#F1C40F'];
 
   if (loading) {
     return (
@@ -212,6 +218,7 @@ export function KpiDashboard() {
                 <TabsTrigger value="hours">Horas Estimadas vs Reales</TabsTrigger>
                 <TabsTrigger value="tasks">Tareas Completadas</TabsTrigger>
                 <TabsTrigger value="efficiency">Eficiencia</TabsTrigger>
+                <TabsTrigger value="summary">Resumen</TabsTrigger>
               </TabsList>
               
               <TabsContent value="hours" className="space-y-4">
@@ -277,7 +284,7 @@ export function KpiDashboard() {
                   <CardHeader>
                     <CardTitle>Eficiencia por Sprint</CardTitle>
                     <CardDescription>
-                      Relación entre horas estimadas y reales, y progreso de tareas para el equipo {activeTeam}
+                      Porcentaje de eficiencia para el equipo {activeTeam}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="pt-2">
@@ -289,7 +296,7 @@ export function KpiDashboard() {
                         >
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
-                          <YAxis domain={[0, 100]} />
+                          <YAxis domain={[0, 150]} />
                           <Tooltip formatter={(value: number) => [`${value}%`, '']} />
                           <Legend />
                           <Line 
@@ -311,6 +318,121 @@ export function KpiDashboard() {
                     </div>
                   </CardContent>
                 </Card>
+              </TabsContent>
+              
+              <TabsContent value="summary" className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Distribución de Tareas</CardTitle>
+                      <CardDescription>
+                        Completadas vs. Pendientes
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={[
+                                { name: 'Completadas', value: teamData.sprints.reduce((acc, sprint) => acc + sprint.tareasCompletadas, 0) },
+                                { name: 'Pendientes', value: teamData.sprints.reduce((acc, sprint) => acc + (sprint.tareasTotales - sprint.tareasCompletadas), 0) }
+                              ]}
+                              cx="50%"
+                              cy="50%"
+                              labelLine={false}
+                              outerRadius={80}
+                              fill="#8884d8"
+                              dataKey="value"
+                              nameKey="name"
+                              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                            >
+                              {[0, 1].map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip formatter={(value: number) => [`${value} tareas`, '']} />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Distribución de Horas</CardTitle>
+                      <CardDescription>
+                        Estimadas vs. Reales
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={[
+                                { name: 'Estimadas', value: teamData.sprints.reduce((acc, sprint) => acc + sprint.horasEstimadas, 0) },
+                                { name: 'Reales', value: teamData.sprints.reduce((acc, sprint) => acc + sprint.horasReales, 0) }
+                              ]}
+                              cx="50%"
+                              cy="50%"
+                              labelLine={false}
+                              outerRadius={80}
+                              fill="#8884d8"
+                              dataKey="value"
+                              nameKey="name"
+                              label={({ name, value }) => `${name}: ${value} hrs`}
+                            >
+                              {[0, 1].map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index + 2 % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip formatter={(value: number) => [`${value} horas`, '']} />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="md:col-span-2">
+                    <CardHeader>
+                      <CardTitle>Estadísticas Generales</CardTitle>
+                      <CardDescription>
+                        Resumen de KPIs para el equipo {activeTeam}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                        <div className="bg-primary/10 p-4 rounded-lg">
+                          <div className="text-sm text-muted-foreground">Total Tareas</div>
+                          <div className="text-2xl font-bold">
+                            {teamData.sprints.reduce((acc, sprint) => acc + sprint.tareasTotales, 0)}
+                          </div>
+                        </div>
+                        <div className="bg-primary/10 p-4 rounded-lg">
+                          <div className="text-sm text-muted-foreground">Tareas Completadas</div>
+                          <div className="text-2xl font-bold">
+                            {teamData.sprints.reduce((acc, sprint) => acc + sprint.tareasCompletadas, 0)}
+                          </div>
+                        </div>
+                        <div className="bg-primary/10 p-4 rounded-lg">
+                          <div className="text-sm text-muted-foreground">Horas Estimadas</div>
+                          <div className="text-2xl font-bold">
+                            {teamData.sprints.reduce((acc, sprint) => acc + sprint.horasEstimadas, 0)}
+                          </div>
+                        </div>
+                        <div className="bg-primary/10 p-4 rounded-lg">
+                          <div className="text-sm text-muted-foreground">Horas Reales</div>
+                          <div className="text-2xl font-bold">
+                            {teamData.sprints.reduce((acc, sprint) => acc + sprint.horasReales, 0)}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
             </Tabs>
           )}
