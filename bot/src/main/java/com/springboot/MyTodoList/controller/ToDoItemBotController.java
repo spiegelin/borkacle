@@ -43,6 +43,9 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 	
 	@Autowired
 	private EstadoService estadoService;
+	
+	@Autowired
+	private KpiService kpiService;
 
 	private String botToken;
 	private String botName;
@@ -565,6 +568,19 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 				if (passwordMatches) {
 					String role = usuario.get().getRol();
 					userRoles.put(chatId, role);
+					
+					// Obtener token JWT del controlador para esta sesión
+					try {
+						String jwtToken = kpiService.authenticateWithController(email, password);
+						if (jwtToken != null && !jwtToken.isEmpty()) {
+							logger.info("Obtenido token JWT del controlador para el usuario: {}", email);
+						} else {
+							logger.warn("No se pudo obtener token JWT del controlador para el usuario: {}", email);
+						}
+					} catch (Exception e) {
+						logger.error("Error al obtener token JWT del controlador: {}", e.getMessage());
+					}
+					
 					if (role.equals("administrador")) {
 						showAdminMenu(chatId);
 					} else {
@@ -615,11 +631,15 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 		keyboard.add(row3);
 		KeyboardRow row4 = new KeyboardRow();
 		row4.add("📊 Show Sprint");
-		row4.add("❓ Help");
+		row4.add("📊 KPI Equipo");
 		keyboard.add(row4);
 		KeyboardRow row5 = new KeyboardRow();
-		row5.add("❌ Hide");
+		row5.add("📊 KPI Persona");
+		row5.add("❓ Help");
 		keyboard.add(row5);
+		KeyboardRow row6 = new KeyboardRow();
+		row6.add("❌ Hide");
+		keyboard.add(row6);
 		keyboardMarkup.setKeyboard(keyboard);
 		keyboardMarkup.setResizeKeyboard(true);
 		keyboardMarkup.setOneTimeKeyboard(false);
@@ -637,9 +657,10 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 		keyboard.add(row1);
 		KeyboardRow row2 = new KeyboardRow();
 		row2.add("✅ Complete Task");
-		row2.add("❓ Help");
+		row2.add("📊 KPI Persona");
 		keyboard.add(row2);
 		KeyboardRow row3 = new KeyboardRow();
+		row3.add("❓ Help");
 		row3.add("❌ Hide");
 		keyboard.add(row3);
 		keyboardMarkup.setKeyboard(keyboard);
@@ -708,6 +729,10 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 								  "Actual Time: [new hours]", null);
 		} else if (messageText.equals("📊 Show Sprint")) {
 			showCurrentSprintTasks(chatId);
+		} else if (messageText.equals("📊 KPI Equipo")) {
+			showKpiEquipo(chatId);
+		} else if (messageText.equals("📊 KPI Persona")) {
+			showKpiPersona(chatId);
 		} else if (messageText.equals("❌ Hide")) {
 			hideKeyboard(chatId);
 		} else {
@@ -725,10 +750,277 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 			sendMessageWithRetry(chatId, "Please provide completion details:\n" +
 								  "Task ID: [task id]\n" +
 								  "Actual Time: [hours]", null);
+		} else if (messageText.equals("📊 KPI Persona")) {
+			showKpiPersona(chatId);
 		} else if (messageText.equals("❌ Hide")) {
 			hideKeyboard(chatId);
 		} else {
 			showUserMenu(chatId);
+		}
+	}
+
+	private void showKpiEquipo(long chatId) {
+		try {
+			logger.info("Fetching KPI data for teams");
+			String kpiData = kpiService.getKpiEquipoData();
+			
+			if (kpiData != null) {
+				// Format the KPI data for display
+				StringBuilder message = new StringBuilder("📊 *KPI POR EQUIPO*\n\n");
+				message.append(formatKpiEquipoData(kpiData));
+				sendMessageWithRetry(chatId, message.toString(), null);
+				logger.info("KPI team data sent to chat ID: {}", chatId);
+			} else {
+				sendMessageWithRetry(chatId, "❌ No se pudieron obtener los datos de KPI por equipo.", null);
+				logger.error("Failed to get KPI team data for chat ID: {}", chatId);
+			}
+		} catch (Exception e) {
+			logger.error("Error showing KPI team data: {}", e.getMessage(), e);
+			sendMessageWithRetry(chatId, "❌ Error al mostrar datos de KPI por equipo: " + e.getMessage(), null);
+		}
+	}
+	
+	private void showKpiPersona(long chatId) {
+		try {
+			logger.info("Fetching KPI data for users");
+			String kpiData = kpiService.getKpiPersonaData();
+			
+			if (kpiData != null) {
+				// Format the KPI data for display
+				StringBuilder message = new StringBuilder("📊 *KPI POR PERSONA*\n\n");
+				message.append(formatKpiPersonaData(kpiData));
+				sendMessageWithRetry(chatId, message.toString(), null);
+				logger.info("KPI user data sent to chat ID: {}", chatId);
+			} else {
+				sendMessageWithRetry(chatId, "❌ No se pudieron obtener los datos de KPI por persona.", null);
+				logger.error("Failed to get KPI user data for chat ID: {}", chatId);
+			}
+		} catch (Exception e) {
+			logger.error("Error showing KPI user data: {}", e.getMessage(), e);
+			sendMessageWithRetry(chatId, "❌ Error al mostrar datos de KPI por persona: " + e.getMessage(), null);
+		}
+	}
+	
+	private String formatKpiEquipoData(String jsonData) {
+		// Simple formatting of raw JSON data
+		// In a real implementation, you would parse the JSON and format it nicely
+		try {
+			return "Datos de KPI por equipo:\n\n" + jsonData;
+		} catch (Exception e) {
+			logger.error("Error formatting KPI team data: {}", e.getMessage());
+			return "Error al formatear datos de KPI por equipo";
+		}
+	}
+	
+	private String formatKpiPersonaData(String jsonData) {
+		try {
+			// Parsear el JSON de forma básica y construir un formato legible
+			if (jsonData == null || jsonData.isEmpty()) {
+				return "No hay datos disponibles.";
+			}
+			
+			StringBuilder result = new StringBuilder();
+			
+			// Eliminar los corchetes externos del array JSON
+			String content = jsonData.trim();
+			if (content.startsWith("[")) {
+				content = content.substring(1);
+			}
+			if (content.endsWith("]")) {
+				content = content.substring(0, content.length() - 1);
+			}
+			
+			// Dividir por usuarios (cada objeto JSON separado por "},{"
+			String[] usuariosJson = content.split("\\},\\{");
+			
+			for (int i = 0; i < usuariosJson.length; i++) {
+				String usuarioJson = usuariosJson[i];
+				
+				// Limpiar el primer y último usuario
+				if (i == 0 && usuarioJson.startsWith("{")) {
+					usuarioJson = usuarioJson.substring(1);
+				}
+				if (i == usuariosJson.length - 1 && usuarioJson.endsWith("}")) {
+					usuarioJson = usuarioJson.substring(0, usuarioJson.length() - 1);
+				}
+				
+				// Extraer ID y nombre de usuario
+				String usuarioId = extractJsonValue(usuarioJson, "usuarioId");
+				String usuarioNombre = extractJsonValue(usuarioJson, "usuarioNombre");
+				
+				result.append("👤 *").append(usuarioNombre).append("* (ID: ").append(usuarioId).append(")\n");
+				
+				// Extraer sprints
+				int sprintsStart = usuarioJson.indexOf("\"sprints\":[");
+				if (sprintsStart != -1) {
+					String sprintsJson = extractJsonArray(usuarioJson.substring(sprintsStart + 10));
+					
+					// Eliminar corchetes del array de sprints
+					if (sprintsJson.startsWith("[")) {
+						sprintsJson = sprintsJson.substring(1);
+					}
+					if (sprintsJson.endsWith("]")) {
+						sprintsJson = sprintsJson.substring(0, sprintsJson.length() - 1);
+					}
+					
+					// Dividir por sprints
+					String[] sprintsArr = sprintsJson.split("\\},\\{");
+					
+					if (sprintsArr.length > 0) {
+						boolean hasSprints = false;
+						
+						for (int j = 0; j < sprintsArr.length; j++) {
+							String sprintJson = sprintsArr[j];
+							
+							// Limpiar el primer y último sprint
+							if (j == 0 && sprintJson.startsWith("{")) {
+								sprintJson = sprintJson.substring(1);
+							}
+							if (j == sprintsArr.length - 1 && sprintJson.endsWith("}")) {
+								sprintJson = sprintJson.substring(0, sprintJson.length() - 1);
+							}
+							
+							// Extraer datos del sprint
+							String sprintNombre = extractJsonValue(sprintJson, "sprintNombre");
+							String horasEstimadas = extractJsonValue(sprintJson, "horasEstimadas");
+							String horasReales = extractJsonValue(sprintJson, "horasReales");
+							String tareasCompletadas = extractJsonValue(sprintJson, "tareasCompletadas");
+							String tareasTotales = extractJsonValue(sprintJson, "tareasTotales");
+							String eficiencia = extractJsonValue(sprintJson, "eficiencia");
+							
+							// Solo mostrar sprints con tareas asignadas
+							if (!"0".equals(tareasTotales) && !"0.0".equals(horasEstimadas)) {
+								hasSprints = true;
+								result.append("  📅 *").append(sprintNombre).append("*\n");
+								result.append("     - Horas estimadas: ").append(formatHoras(horasEstimadas)).append("\n");
+								result.append("     - Horas reales: ").append(formatHoras(horasReales)).append("\n");
+								result.append("     - Tareas: ").append(tareasCompletadas).append("/").append(tareasTotales).append("\n");
+								
+								// Formatear la eficiencia para que sea legible
+								String eficienciaFormateada = formatEficiencia(eficiencia);
+								result.append("     - Eficiencia: ").append(eficienciaFormateada).append("\n");
+							}
+						}
+						
+						if (!hasSprints) {
+							result.append("  No tiene tareas en sprints activos\n");
+						}
+					} else {
+						result.append("  No tiene sprints asignados\n");
+					}
+				} else {
+					result.append("  No tiene sprints asignados\n");
+				}
+				
+				// Separador entre usuarios
+				result.append("\n");
+			}
+			
+			return result.toString();
+		} catch (Exception e) {
+			logger.error("Error formatting KPI user data: {}", e.getMessage(), e);
+			return "Error al formatear datos: " + e.getMessage() + "\n\nDatos en formato JSON original:\n\n" + jsonData;
+		}
+	}
+	
+	// Método auxiliar para extraer un valor de un campo JSON
+	private String extractJsonValue(String json, String field) {
+		String searchFor = "\"" + field + "\":";
+		int start = json.indexOf(searchFor) + searchFor.length();
+		if (start == -1 + searchFor.length()) {
+			return "";
+		}
+		
+		// Verificar si el valor es una cadena (con comillas) o un número/booleano
+		boolean isString = json.charAt(start) == '"';
+		
+		if (isString) {
+			start++; // Saltamos la comilla inicial
+			int end = json.indexOf("\"", start);
+			return json.substring(start, end);
+		} else {
+			// Para valores numéricos, buscamos hasta la coma o cierre de objeto
+			int commaPos = json.indexOf(",", start);
+			int bracketPos = json.indexOf("}", start);
+			
+			// Tomamos la posición más cercana
+			int end = (commaPos != -1 && (bracketPos == -1 || commaPos < bracketPos)) ? commaPos : bracketPos;
+			
+			if (end == -1) {
+				// Si no hay más separadores, hasta el final
+				return json.substring(start);
+			}
+			return json.substring(start, end);
+		}
+	}
+	
+	// Método auxiliar para extraer un array JSON completo
+	private String extractJsonArray(String json) {
+		int depth = 0;
+		int endPos = 0;
+		
+		for (int i = 0; i < json.length(); i++) {
+			char c = json.charAt(i);
+			if (c == '[') {
+				depth++;
+			} else if (c == ']') {
+				depth--;
+				if (depth == 0) {
+					endPos = i + 1;
+					break;
+				}
+			}
+		}
+		
+		return json.substring(0, endPos);
+	}
+	
+	// Método para formatear las horas
+	private String formatHoras(String horas) {
+		try {
+			double horasNum = Double.parseDouble(horas);
+			return String.format("%.1f h", horasNum);
+		} catch (NumberFormatException e) {
+			return horas;
+		}
+	}
+	
+	// Método para formatear la eficiencia
+	private String formatEficiencia(String eficiencia) {
+		try {
+			// Casos especiales
+			if (eficiencia.equals("Infinity") || eficiencia.equals("\"Infinity\"")) {
+				return "∞ (tarea sin tiempo real registrado)";
+			}
+			
+			// Convertir a número y a porcentaje
+			double eficienciaNum = Double.parseDouble(eficiencia);
+			eficienciaNum = Math.round(eficienciaNum * 10) / 10.0; // Redondear a 1 decimal
+			
+			// Determinar mensaje según la eficiencia
+			String emoji;
+			String mensaje;
+			
+			if (eficienciaNum > 150) {
+				emoji = "🔥";
+				mensaje = "Excelente";
+			} else if (eficienciaNum > 100) {
+				emoji = "✅";
+				mensaje = "Muy bien";
+			} else if (eficienciaNum >= 80) {
+				emoji = "👍";
+				mensaje = "Bien";
+			} else if (eficienciaNum > 0) {
+				emoji = "⚠️";
+				mensaje = "Necesita mejorar";
+			} else {
+				emoji = "❓";
+				mensaje = "Sin datos";
+			}
+			
+			return String.format("%s %.1f%% (%s)", emoji, eficienciaNum, mensaje);
+		} catch (NumberFormatException e) {
+			return eficiencia;
 		}
 	}
 
