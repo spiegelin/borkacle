@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { Bell, ChevronDown, Search, SettingsIcon, User, Settings } from "lucide-react"
+import { Bell, ChevronDown, Search, SettingsIcon, User, Settings, LogOut } from "lucide-react"
 import {
   SidebarProvider,
   Sidebar,
@@ -25,6 +25,7 @@ import { NotificationsPanel } from "@/components/notifications-panel"
 import { ProjectSelector } from "@/components/project-selector"
 import { UserProfileSettings } from "@/components/user-profile-settings"
 import Link from "next/link"
+import { useAuth } from "@/components/auth/AuthContext"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -36,6 +37,8 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [notificationCount, setNotificationCount] = useState(5)
+  const { user, logout } = useAuth()
+  const isAdmin = user?.rol === "administrador"
 
   // Close panels when clicking outside
   useEffect(() => {
@@ -163,8 +166,9 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
                       <span>Reports</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+                  
                   <SidebarMenuItem>
-                    <SidebarMenuButton isActive={activeView === "kpi"} onClick={() => setActiveView("kpi")}>
+                    <SidebarMenuButton isActive={activeView === "kpi-individual"} onClick={() => setActiveView("kpi-individual")}>
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="16"
@@ -175,46 +179,71 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
                         strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        className="lucide lucide-pie-chart"
+                        className="lucide lucide-user"
                       >
-                        <path d="M21.21 15.89A10 10 0 1 1 8 2.83" />
-                        <path d="M22 12A10 10 0 0 0 12 2v10z" />
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
                       </svg>
-                      <span>KPI's por Equipo</span>
+                      <span>KPI Individual</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton isActive={activeView === "kpi-persona"} onClick={() => setActiveView("kpi-persona")}>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="lucide lucide-user-cog"
-                      >
-                        <circle cx="12" cy="8" r="4" />
-                        <path d="M14.5 19.5a2.5 2.5 0 0 0-5 0" />
-                        <rect width="20" height="14" x="2" y="6" rx="2" />
-                        <path d="M6 6v.5" />
-                        <path d="M10 6v.5" />
-                        <path d="M14 6v.5" />
-                        <path d="M18 6v.5" />
-                        <path d="M6 15.5v.5" />
-                        <path d="M10 15.5v.5" />
-                        <path d="M14 15.5v.5" />
-                        <path d="M18 15.5v.5" />
-                        <path d="M6 10v.5" />
-                        <path d="M18 10v.5" />
-                        <path d="M12 10v.5" />
-                      </svg>
-                      <span>KPI's por Persona</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  
+                  {isAdmin && (
+                    <>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton isActive={activeView === "kpi"} onClick={() => setActiveView("kpi")}>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="lucide lucide-pie-chart"
+                          >
+                            <path d="M21.21 15.89A10 10 0 1 1 8 2.83" />
+                            <path d="M22 12A10 10 0 0 0 12 2v10z" />
+                          </svg>
+                          <span>KPI's por Equipo</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton isActive={activeView === "kpi-persona"} onClick={() => setActiveView("kpi-persona")}>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="lucide lucide-user-cog"
+                          >
+                            <circle cx="12" cy="8" r="4" />
+                            <path d="M14.5 19.5a2.5 2.5 0 0 0-5 0" />
+                            <rect width="20" height="14" x="2" y="6" rx="2" />
+                            <path d="M6 6v.5" />
+                            <path d="M10 6v.5" />
+                            <path d="M14 6v.5" />
+                            <path d="M18 6v.5" />
+                            <path d="M6 15.5v.5" />
+                            <path d="M10 15.5v.5" />
+                            <path d="M14 15.5v.5" />
+                            <path d="M18 15.5v.5" />
+                            <path d="M6 10v.5" />
+                            <path d="M18 10v.5" />
+                            <path d="M12 10v.5" />
+                          </svg>
+                          <span>KPI's por Persona</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </>
+                  )}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -273,9 +302,11 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
                 >
                   <Avatar className="h-8 w-8">
                     <AvatarImage src="/placeholder-user.jpg" alt="User" />
-                    <AvatarFallback className="bg-[#3A3A3A] text-white">JD</AvatarFallback>
+                    <AvatarFallback className="bg-[#3A3A3A] text-white">
+                      {user?.nombre ? user.nombre.charAt(0) : 'U'}
+                    </AvatarFallback>
                   </Avatar>
-                  <span className="hidden md:inline-block">John Doe</span>
+                  <span className="hidden md:inline-block">{user?.nombre || 'Usuario'}</span>
                   <ChevronDown className="h-4 w-4" />
                 </Button>
                 {profileOpen && (
@@ -293,6 +324,14 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
                           Personal settings
                         </Button>
                       </Link>
+                      <Button 
+                        variant="ghost" 
+                        className="w-full justify-start text-sm text-red-500 hover:text-red-700 hover:bg-red-50"
+                        onClick={logout}
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Cerrar Sesión
+                      </Button>
                     </div>
                   </div>
                 )}

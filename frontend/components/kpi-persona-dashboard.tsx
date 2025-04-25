@@ -28,6 +28,7 @@ import {
   Cell
 } from "recharts"
 import api from "@/lib/api"
+import { useAuth } from "@/components/auth/AuthContext"
 
 interface SprintData {
   sprintId: number
@@ -45,13 +46,19 @@ interface KpiPersonaData {
   sprints: SprintData[]
 }
 
-export function KpiPersonaDashboard() {
+interface KpiPersonaDashboardProps {
+  individualUserView?: boolean;
+  userId?: number;
+}
+
+export function KpiPersonaDashboard({ individualUserView = false, userId }: KpiPersonaDashboardProps) {
   const [kpiData, setKpiData] = useState<KpiPersonaData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeUser, setActiveUser] = useState<string | null>(null)
   const [errorDetails, setErrorDetails] = useState<string | null>(null)
   const [view, setView] = useState<"team" | "person">("person")
+  const { user } = useAuth()
 
   useEffect(() => {
     fetchKpiData()
@@ -67,7 +74,12 @@ export function KpiPersonaDashboard() {
       
       const response = await api.get('/api/kpi/persona')
       console.log("Respuesta recibida:", response)
-      const data = response.data
+      let data = response.data
+      
+      // Filter data if in individual view mode
+      if (individualUserView && userId) {
+        data = data.filter((item: KpiPersonaData) => item.usuarioId === userId)
+      }
       
       setKpiData(data)
       if (data.length > 0) {
@@ -159,14 +171,18 @@ export function KpiPersonaDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold tracking-tight">KPI por Persona</h2>
+        <h2 className="text-3xl font-bold tracking-tight">
+          {individualUserView ? "Mi KPI Individual" : "KPI por Persona"}
+        </h2>
         <div className="flex items-center space-x-2">
-          <Tabs value={view} onValueChange={(value) => setView(value as "team" | "person")} className="mr-4">
-            <TabsList>
-              <TabsTrigger value="team">Por Equipo</TabsTrigger>
-              <TabsTrigger value="person">Por Persona</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          {!individualUserView && (
+            <Tabs value={view} onValueChange={(value) => setView(value as "team" | "person")} className="mr-4">
+              <TabsList>
+                <TabsTrigger value="team">Por Equipo</TabsTrigger>
+                <TabsTrigger value="person">Por Persona</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          )}
           <Button variant="outline" size="sm" onClick={fetchKpiData}>
             <RefreshCw className="mr-2 h-4 w-4" />
             Actualizar
@@ -179,36 +195,42 @@ export function KpiPersonaDashboard() {
           <CardContent className="pt-6">
             <div className="text-center py-10">
               <h3 className="text-lg font-medium mb-2">No hay datos disponibles</h3>
-              <p className="text-muted-foreground">No se encontraron personas o sprints para mostrar estadísticas KPI.</p>
+              <p className="text-muted-foreground">
+                {individualUserView 
+                  ? "No se encontraron datos KPI para tu usuario." 
+                  : "No se encontraron personas o sprints para mostrar estadísticas KPI."}
+              </p>
             </div>
           </CardContent>
         </Card>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Seleccionar Persona</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Select
-                  value={activeUser || ''}
-                  onValueChange={(value) => setActiveUser(value)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Seleccionar persona" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {kpiData.map((user) => (
-                      <SelectItem key={user.usuarioId} value={user.usuarioNombre}>
-                        {user.usuarioNombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </CardContent>
-            </Card>
-          </div>
+          {!individualUserView && (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Seleccionar Persona</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Select
+                    value={activeUser || ''}
+                    onValueChange={(value) => setActiveUser(value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Seleccionar persona" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {kpiData.map((user) => (
+                        <SelectItem key={user.usuarioId} value={user.usuarioNombre}>
+                          {user.usuarioNombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {userData && (
             <Tabs defaultValue="hours" className="space-y-4">
