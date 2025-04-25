@@ -180,7 +180,39 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
                         <path d="M21.21 15.89A10 10 0 1 1 8 2.83" />
                         <path d="M22 12A10 10 0 0 0 12 2v10z" />
                       </svg>
-                      <span>KPI's</span>
+                      <span>KPI's por Equipo</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton isActive={activeView === "kpi-persona"} onClick={() => setActiveView("kpi-persona")}>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="lucide lucide-user-cog"
+                      >
+                        <circle cx="12" cy="8" r="4" />
+                        <path d="M14.5 19.5a2.5 2.5 0 0 0-5 0" />
+                        <rect width="20" height="14" x="2" y="6" rx="2" />
+                        <path d="M6 6v.5" />
+                        <path d="M10 6v.5" />
+                        <path d="M14 6v.5" />
+                        <path d="M18 6v.5" />
+                        <path d="M6 15.5v.5" />
+                        <path d="M10 15.5v.5" />
+                        <path d="M14 15.5v.5" />
+                        <path d="M18 15.5v.5" />
+                        <path d="M6 10v.5" />
+                        <path d="M18 10v.5" />
+                        <path d="M12 10v.5" />
+                      </svg>
+                      <span>KPI's por Persona</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 </SidebarMenu>

@@ -20,4 +20,7 @@ public interface TareaRepository extends JpaRepository<Tarea, Long> {
     
     @Query("SELECT t FROM Tarea t WHERE t.sprint.id = :sprintId")
     List<Tarea> findBySprintId(@Param("sprintId") Long sprintId);
+    
+    @Query("SELECT t FROM Tarea t WHERE t.asignadoA.id = :usuarioId AND t.sprint.id = :sprintId")
+    List<Tarea> findByUsuarioIdAndSprintId(@Param("usuarioId") Long usuarioId, @Param("sprintId") Long sprintId);
 } 

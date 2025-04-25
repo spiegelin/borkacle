@@ -1,12 +1,15 @@
 package com.borkacle.controller.controller;
 
 import com.borkacle.controller.payload.KpiResponse;
+import com.borkacle.controller.payload.KpiPersonaResponse;
 import com.borkacle.model.Equipo;
 import com.borkacle.model.Sprint;
 import com.borkacle.model.Tarea;
+import com.borkacle.model.Usuario;
 import com.borkacle.repository.EquipoRepository;
 import com.borkacle.repository.SprintRepository;
 import com.borkacle.repository.TareaRepository;
+import com.borkacle.repository.UsuarioRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +41,9 @@ public class KpiController {
 
     @Autowired
     private SprintRepository sprintRepository;
+    
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
@@ -74,8 +80,16 @@ public class KpiController {
                     
                     // Obtener tareas del equipo en el sprint
                     List<Tarea> tareas = tareaRepository.findByEquipoIdAndSprintId(equipo.getId(), sprint.getId());
-                    logger.debug("KpiController: Tareas encontradas para equipo {} y sprint {}: {}", 
+                    logger.info("KpiController: Tareas encontradas para equipo {} y sprint {}: {}", 
                               equipo.getNombre(), sprint.getNombre(), tareas.size());
+                    
+                    // Mostrar detalles de cada tarea para depuración
+                    for (Tarea t : tareas) {
+                        logger.info("Tarea: ID={}, Título={}, TiempoEstimado={}, TiempoReal={}, Equipo={}",
+                                 t.getId(), t.getTitulo(), t.getTiempoEstimado(), t.getTiempoReal(), 
+                                 t.getAsignadoA() != null && t.getAsignadoA().getEquipo() != null ? 
+                                 t.getAsignadoA().getEquipo().getNombre() : "sin equipo");
+                    }
                     
                     // Calcular horas estimadas y reales
                     double horasEstimadas = tareas.stream()
@@ -107,6 +121,86 @@ public class KpiController {
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             logger.error("KpiController: Error al procesar solicitud", e);
+            throw e;
+        }
+    }
+    
+    @GetMapping("/persona")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<KpiPersonaResponse>> getKpiPersonaData() {
+        try {
+            logger.info("KpiController: Inicio de solicitud getKpiPersonaData");
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            logger.info("KpiController: Usuario autenticado: {}", auth.getName());
+            
+            List<KpiPersonaResponse> result = new ArrayList<>();
+            
+            // Obtener todos los usuarios
+            List<Usuario> usuarios = usuarioRepository.findAll();
+            logger.info("KpiController: Usuarios encontrados: {}", usuarios.size());
+            
+            // Obtener todos los sprints
+            List<Sprint> sprints = sprintRepository.findAll();
+            logger.info("KpiController: Sprints encontrados: {}", sprints.size());
+            
+            // Para cada usuario, calcular KPIs por sprint
+            for (Usuario usuario : usuarios) {
+                KpiPersonaResponse kpiResponse = new KpiPersonaResponse();
+                kpiResponse.setUsuarioId(usuario.getId());
+                kpiResponse.setUsuarioNombre(usuario.getNombre());
+                
+                List<KpiPersonaResponse.SprintData> sprintDataList = new ArrayList<>();
+                
+                for (Sprint sprint : sprints) {
+                    KpiPersonaResponse.SprintData sprintData = new KpiPersonaResponse.SprintData();
+                    sprintData.setSprintId(sprint.getId());
+                    sprintData.setSprintNombre(sprint.getNombre());
+                    
+                    // Obtener tareas del usuario en el sprint
+                    List<Tarea> tareas = tareaRepository.findByUsuarioIdAndSprintId(usuario.getId(), sprint.getId());
+                    logger.info("KpiController: Tareas encontradas para usuario {} y sprint {}: {}", 
+                              usuario.getNombre(), sprint.getNombre(), tareas.size());
+                    
+                    // Mostrar detalles de cada tarea para depuración
+                    for (Tarea t : tareas) {
+                        logger.info("Tarea: ID={}, Título={}, TiempoEstimado={}, TiempoReal={}",
+                                 t.getId(), t.getTitulo(), t.getTiempoEstimado(), t.getTiempoReal());
+                    }
+                    
+                    // Calcular horas estimadas y reales
+                    double horasEstimadas = tareas.stream()
+                            .mapToDouble(t -> t.getTiempoEstimado() != null ? t.getTiempoEstimado() : 0)
+                            .sum();
+                    
+                    double horasReales = tareas.stream()
+                            .mapToDouble(t -> t.getTiempoReal() != null ? t.getTiempoReal() : 0)
+                            .sum();
+                    
+                    // Contar tareas completadas
+                    long tareasCompletadas = tareas.stream()
+                            .filter(t -> t.getEstado() != null && "Completada".equals(t.getEstado().getNombre()))
+                            .count();
+                    
+                    // Calcular la eficiencia (si las horas estimadas > 0)
+                    double eficiencia = horasEstimadas > 0 ? (horasEstimadas / horasReales) * 100 : 0;
+                    
+                    sprintData.setHorasEstimadas(horasEstimadas);
+                    sprintData.setHorasReales(horasReales);
+                    sprintData.setTareasCompletadas((int) tareasCompletadas);
+                    sprintData.setTareasTotales(tareas.size());
+                    sprintData.setEficiencia(eficiencia);
+                    
+                    sprintDataList.add(sprintData);
+                }
+                
+                kpiResponse.setSprints(sprintDataList);
+                result.add(kpiResponse);
+            }
+            
+            logger.info("KpiController: Respuesta por persona generada con éxito. Usuarios procesados: {}", result.size());
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            logger.error("KpiController: Error al procesar solicitud de KPI por persona", e);
             throw e;
         }
     }

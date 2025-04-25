@@ -12,6 +12,7 @@ import { Sprints } from '@/components/sprints'
 import { Reports } from '@/components/reports'
 import { Backlog } from '@/components/backlog'
 import { KpiDashboard } from '@/components/kpi-dashboard'
+import { KpiPersonaDashboard } from '@/components/kpi-persona-dashboard'
 
 export default function Dashboard() {
   const { user, logout } = useAuth()
@@ -29,6 +30,8 @@ export default function Dashboard() {
         return <Reports />
       case "kpi":
         return <KpiDashboard />
+      case "kpi-persona":
+        return <KpiPersonaDashboard />
       default:
         return <TaskBoard />
     }
