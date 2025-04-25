@@ -1,14 +1,15 @@
 import type React from "react"
-import type { Metadata } from "next"
 import { Inter } from "next/font/google"
+import type { Metadata } from "next"
 import "./globals.css"
-import { NavigationBar } from "./components/navigation-bar"
+import { AuthProvider } from "@/components/auth/AuthContext"
+//import { NavigationBar } from "./components/navigation-bar"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Oracle Cloud Tasks",
-  description: "Project management tool for Oracle Cloud",
+  title: "Borkacle Dashboard",
+  description: "A modern project management dashboard",
 }
 
 export default function RootLayout({
@@ -19,8 +20,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <NavigationBar />
-        {children}
+        <AuthProvider>
+          {/* <NavigationBar /> Used only for testing*/}
+          {children}
+        </AuthProvider>
       </body>
     </html>
   )

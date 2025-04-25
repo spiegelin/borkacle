@@ -12,9 +12,11 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useAuth } from "@/components/auth/AuthContext"
 
 export default function LoginPage() {
   const router = useRouter()
+  const { login } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -34,16 +36,13 @@ export default function LoginPage() {
 
     try {
       setIsLoading(true)
-
-      // In a real application, you would make an API call to authenticate
-      // For this demo, we'll simulate a successful login after a short delay
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // For development, just log success and redirect
-      console.log("Login successful - no authentication required")
-      router.push("/")
-    } catch (err) {
-      setError("Invalid email or password. Please try again.")
+      
+      // Call the login function from auth context
+      await login(email, password)
+      
+      // The router redirection is handled in the AuthContext
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Invalid email or password. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -240,7 +239,7 @@ export default function LoginPage() {
       </div>
 
       <div className="mt-8 text-center">
-        <Link href="/welcome" className="text-sm text-gray-600 hover:text-[#F7630C]">
+        <Link href="/landing" className="text-sm text-gray-600 hover:text-[#F7630C]">
           Back to home
         </Link>
       </div>

@@ -15,10 +15,10 @@ export default function LandingPage() {
             <div className="font-semibold text-xl text-[#3A3A3A]">Oracle Cloud Tasks</div>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/" passHref>
+            <Link href="/login" passHref>
               <Button variant="outline">Log In</Button>
             </Link>
-            <Link href="/" passHref>
+            <Link href="/signup" passHref>
               <Button className="bg-[#C74634] hover:bg-[#b03d2e]">Sign Up</Button>
             </Link>
           </div>
@@ -38,13 +38,13 @@ export default function LandingPage() {
                 projects on time.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/" passHref>
+                <Link href="/signup" passHref>
                   <Button size="lg" className="bg-[#C74634] hover:bg-[#b03d2e]">
                     Get Started
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
-                <Link href="/" passHref>
+                <Link href="#features" passHref>
                   <Button size="lg" variant="outline">
                     View Demo
                   </Button>
@@ -65,7 +65,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-white">
+      <section id="features" className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-[#3A3A3A]">Powerful Features for Your Team</h2>
@@ -164,14 +164,14 @@ export default function LandingPage() {
             Join thousands of teams that use Oracle Cloud Tasks to deliver projects on time and within budget.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/" passHref>
+            <Link href="/signup" passHref>
               <Button size="lg" className="bg-[#C74634] hover:bg-[#b03d2e]">
                 Start Free Trial
               </Button>
             </Link>
-            <Link href="/" passHref>
+            <Link href="/login" passHref>
               <Button size="lg" variant="outline">
-                Contact Sales
+                Login
               </Button>
             </Link>
           </div>
@@ -198,7 +198,7 @@ export default function LandingPage() {
               <h3 className="font-semibold text-lg mb-4">Product</h3>
               <ul className="space-y-2">
                 <li>
-                  <a href="#" className="text-gray-300 hover:text-white">
+                  <a href="#features" className="text-gray-300 hover:text-white">
                     Features
                   </a>
                 </li>
@@ -249,7 +249,7 @@ export default function LandingPage() {
               <ul className="space-y-2">
                 <li>
                   <a href="#" className="text-gray-300 hover:text-white">
-                    About Us
+                    About
                   </a>
                 </li>
                 <li>
@@ -259,19 +259,19 @@ export default function LandingPage() {
                 </li>
                 <li>
                   <a href="#" className="text-gray-300 hover:text-white">
-                    Contact
+                    Press
                   </a>
                 </li>
                 <li>
                   <a href="#" className="text-gray-300 hover:text-white">
-                    Privacy Policy
+                    Contact
                   </a>
                 </li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-700 mt-12 pt-8 text-center text-gray-400">
-            <p>&copy; {new Date().getFullYear()} Oracle Cloud Tasks. All rights reserved.</p>
+          <div className="mt-12 pt-8 border-t border-gray-700 text-center text-gray-400 text-sm">
+            <p>&copy; 2023 Oracle Cloud Tasks. All rights reserved.</p>
           </div>
         </div>
       </footer>

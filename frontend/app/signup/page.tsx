@@ -13,9 +13,11 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useAuth } from "@/components/auth/AuthContext"
 
 export default function SignupPage() {
   const router = useRouter()
+  const { signup, login } = useAuth()
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -31,6 +33,7 @@ export default function SignupPage() {
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [step, setStep] = useState(1)
+  const [successMessage, setSuccessMessage] = useState("")
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -108,6 +111,7 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    setSuccessMessage("")
 
     if (!validateStep3()) {
       return
@@ -116,15 +120,35 @@ export default function SignupPage() {
     try {
       setIsLoading(true)
 
-      // In a real application, you would make an API call to register the user
-      // For this demo, we'll simulate a successful registration after a short delay
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      // Prepare user data for API
+      const userData = {
+        nombre: `${formData.firstName} ${formData.lastName}`,
+        email: formData.email,
+        password: formData.password,
+        rol: "usuario" // Default role
+      }
 
-      // For development, just log success and redirect
-      console.log("Registration successful - no authentication required")
-      router.push("/")
-    } catch (err) {
-      setError("An error occurred during registration. Please try again.")
+      // Call signup API
+      const result = await signup(userData)
+      
+      if (result.success) {
+        setSuccessMessage("Account created successfully! Redirecting to login...")
+        
+        // Auto login after signup
+        setTimeout(async () => {
+          try {
+            await login(formData.email, formData.password)
+            // The router will handle redirection in the auth context
+          } catch (error) {
+            // If auto-login fails, redirect to login page
+            router.push('/login')
+          }
+        }, 2000)
+      } else {
+        setError(result.message || "Registration failed. Please try again.")
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "An error occurred during registration. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -192,6 +216,12 @@ export default function SignupPage() {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
+          
+          {successMessage && (
+            <Alert className="mb-6 bg-green-50 border-green-200">
+              <AlertDescription className="text-green-700">{successMessage}</AlertDescription>
+            </Alert>
+          )}
 
           <form onSubmit={handleSubmit}>
             {/* Step 1: Account Information */}
@@ -248,7 +278,6 @@ export default function SignupPage() {
                       value={formData.email}
                       onChange={handleChange}
                       className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#F7630C] focus:border-[#F7630C]"
-                      placeholder="you@example.com"
                     />
                   </div>
                 </div>
@@ -283,7 +312,6 @@ export default function SignupPage() {
                       value={formData.password}
                       onChange={handleChange}
                       className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#F7630C] focus:border-[#F7630C]"
-                      placeholder="••••••••"
                     />
                     <button
                       type="button"
@@ -314,7 +342,6 @@ export default function SignupPage() {
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#F7630C] focus:border-[#F7630C]"
-                      placeholder="••••••••"
                     />
                     <button
                       type="button"
@@ -335,14 +362,14 @@ export default function SignupPage() {
                     type="button"
                     variant="outline"
                     onClick={handlePrevStep}
-                    className="flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F7630C]"
+                    className="inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F7630C]"
                   >
                     Back
                   </Button>
                   <Button
                     type="button"
                     onClick={handleNextStep}
-                    className="flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#F7630C] hover:bg-[#E25A00] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F7630C]"
+                    className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#F7630C] hover:bg-[#E25A00] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F7630C]"
                   >
                     Next
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -363,6 +390,7 @@ export default function SignupPage() {
                       id="companyName"
                       name="companyName"
                       type="text"
+                      autoComplete="organization"
                       required
                       value={formData.companyName}
                       onChange={handleChange}
@@ -375,24 +403,22 @@ export default function SignupPage() {
                   <Label htmlFor="companySize" className="block text-sm font-medium text-gray-700">
                     Company size
                   </Label>
-                  <div className="mt-1">
-                    <Select
-                      value={formData.companySize}
-                      onValueChange={(value) => handleSelectChange("companySize", value)}
-                    >
-                      <SelectTrigger id="companySize" className="w-full">
-                        <SelectValue placeholder="Select company size" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1-10">1-10 employees</SelectItem>
-                        <SelectItem value="11-50">11-50 employees</SelectItem>
-                        <SelectItem value="51-200">51-200 employees</SelectItem>
-                        <SelectItem value="201-500">201-500 employees</SelectItem>
-                        <SelectItem value="501-1000">501-1000 employees</SelectItem>
-                        <SelectItem value="1000+">1000+ employees</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <Select
+                    value={formData.companySize}
+                    onValueChange={(value) => handleSelectChange("companySize", value)}
+                  >
+                    <SelectTrigger className="w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#F7630C] focus:border-[#F7630C]">
+                      <SelectValue placeholder="Select company size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1-10">1-10 employees</SelectItem>
+                      <SelectItem value="11-50">11-50 employees</SelectItem>
+                      <SelectItem value="51-200">51-200 employees</SelectItem>
+                      <SelectItem value="201-500">201-500 employees</SelectItem>
+                      <SelectItem value="501-1000">501-1000 employees</SelectItem>
+                      <SelectItem value="1001+">1001+ employees</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="flex items-center">
@@ -400,15 +426,14 @@ export default function SignupPage() {
                     id="terms"
                     checked={agreeToTerms}
                     onCheckedChange={(checked) => setAgreeToTerms(checked as boolean)}
-                    className="h-4 w-4 text-[#F7630C] focus:ring-[#F7630C] border-gray-300 rounded"
                   />
                   <Label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
                     I agree to the{" "}
-                    <Link href="#" className="text-[#F7630C] hover:text-[#E25A00]">
-                      Terms of Service
+                    <Link href="#" className="font-medium text-[#F7630C] hover:text-[#E25A00]">
+                      Terms and Conditions
                     </Link>{" "}
                     and{" "}
-                    <Link href="#" className="text-[#F7630C] hover:text-[#E25A00]">
+                    <Link href="#" className="font-medium text-[#F7630C] hover:text-[#E25A00]">
                       Privacy Policy
                     </Link>
                   </Label>
@@ -419,14 +444,14 @@ export default function SignupPage() {
                     type="button"
                     variant="outline"
                     onClick={handlePrevStep}
-                    className="flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F7630C]"
+                    className="inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F7630C]"
                   >
                     Back
                   </Button>
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#F7630C] hover:bg-[#E25A00] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F7630C]"
+                    className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#F7630C] hover:bg-[#E25A00] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F7630C]"
                   >
                     {isLoading ? (
                       <div className="flex items-center">
@@ -523,7 +548,7 @@ export default function SignupPage() {
       </div>
 
       <div className="mt-8 text-center">
-        <Link href="/welcome" className="text-sm text-gray-600 hover:text-[#F7630C]">
+        <Link href="/landing" className="text-sm text-gray-600 hover:text-[#F7630C]">
           Back to home
         </Link>
       </div>
