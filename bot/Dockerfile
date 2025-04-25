@@ -1,12 +1,12 @@
-FROM openjdk:22
+FROM maven:3.9-eclipse-temurin-17
 
 WORKDIR /app
 
-COPY target/MyTodoList-0.0.1-SNAPSHOT.jar /app/app.jar
-
-RUN groupadd -r appgroup && useradd -r -g appgroup appuser
-USER appuser
+COPY pom.xml /app/
+COPY src /app/src/
+COPY .mvn /app/.mvn/
+COPY mvnw /app/
 
 EXPOSE 8080
 
-CMD ["java", "-jar", "/app/app.jar"]
+CMD ["sh", "-c", "mvn clean install && mvn spring-boot:run"]

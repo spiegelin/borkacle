@@ -15,6 +15,10 @@ services:
     depends_on:
       - bot
     restart: unless-stopped
+    volumes:
+      - ./controller:/app
+      - ./wallet:/app/wallet
+      - controller-maven-repo:/root/.m2
 
   bot:
     build:
@@ -27,6 +31,10 @@ services:
     networks:
       - borkacle-network
     restart: unless-stopped
+    volumes:
+      - ./bot:/app
+      - ./wallet:/app/wallet
+      - bot-maven-repo:/root/.m2
 
   frontend:
     build:
@@ -41,7 +49,15 @@ services:
     depends_on:
       - controller
     restart: unless-stopped
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
 
 networks:
   borkacle-network:
-    driver: bridge 
+    driver: bridge
+
+volumes:
+  controller-maven-repo:
+  bot-maven-repo: 

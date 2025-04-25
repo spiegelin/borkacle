@@ -16,4 +16,8 @@ logs/
 
 # Application properties with sensitive information
 application-*.properties
-!application-example.properties 
+!application-example.properties
+
+# Environment files
+.env
+!.env.example 
