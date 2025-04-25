@@ -10,6 +10,19 @@ services:
       - SERVER_PORT=8080
       - BOT_SERVICE_URL=http://bot:8080
       - FRONTEND_SERVICE_URL=http://frontend:3000
+      - DB_URL=${DB_URL}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - WALLET_LOCATION=${WALLET_LOCATION}
+      - TNS_ADMIN=${TNS_ADMIN}
+      - TRUST_STORE=${TRUST_STORE}
+      - TRUST_STORE_PASSWORD=${TRUST_STORE_PASSWORD}
+      - KEY_STORE=${KEY_STORE}
+      - KEY_STORE_PASSWORD=${KEY_STORE_PASSWORD}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_BOT_NAME=${TELEGRAM_BOT_NAME}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS}
     networks:
       - borkacle-network
     depends_on:
@@ -19,6 +32,8 @@ services:
       - ./controller:/app
       - ./wallet:/app/wallet
       - controller-maven-repo:/root/.m2
+    env_file:
+      - ./controller/.env
 
   bot:
     build:
@@ -28,6 +43,10 @@ services:
     environment:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - CONTROLLER_SERVICE_URL=http://controller:8080
+      - DB_URL=${DB_URL}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - TELEGRAM_BOT_NAME=${TELEGRAM_BOT_NAME}
     networks:
       - borkacle-network
     restart: unless-stopped
@@ -35,6 +54,8 @@ services:
       - ./bot:/app
       - ./wallet:/app/wallet
       - bot-maven-repo:/root/.m2
+    env_file:
+      - ./bot/.env
 
   frontend:
     build:
@@ -44,6 +65,8 @@ services:
     environment:
       - NODE_ENV=production
       - CONTROLLER_API_URL=http://controller:8080
+      - NEXT_PUBLIC_CONTROLLER_API_URL=${NEXT_PUBLIC_CONTROLLER_API_URL}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
     networks:
       - borkacle-network
     depends_on:
@@ -53,6 +76,8 @@ services:
       - ./frontend:/app
       - /app/node_modules
       - /app/.next
+    env_file:
+      - ./frontend/.env.local
 
 networks:
   borkacle-network:
