@@ -1,0 +1,1 @@
+// Deprecated - Using direct API calls with authentication interceptors instead 

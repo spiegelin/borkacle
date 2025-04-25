@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Value;
 
 import oracle.jdbc.pool.OracleDataSource;
 ///*
@@ -24,49 +25,77 @@ import oracle.jdbc.pool.OracleDataSource;
 //
 @Configuration
 public class OracleConfiguration {
-    Logger logger = LoggerFactory.getLogger(DbSettings.class);
+    private static final Logger logger = LoggerFactory.getLogger(OracleConfiguration.class);
     
-    @Autowired
-    private DbSettings dbSettings;
+    @Value("${spring.datasource.url}")
+    private String jdbcUrl;
     
-    @Autowired
-    private Environment env;
+    @Value("${spring.datasource.username}")
+    private String username;
+    
+    @Value("${spring.datasource.password}")
+    private String password;
+    
+    @Value("${spring.datasource.driver-class-name}")
+    private String driverClassName;
+    
+    @Value("${oracle.net.wallet_location}")
+    private String walletLocation;
+
+    @Value("${oracle.net.tns_admin}")
+    private String tnsAdmin;
+
+    @Value("${javax.net.ssl.trustStore}")
+    private String trustStore;
+
+    @Value("${javax.net.ssl.trustStorePassword}")
+    private String trustStorePassword;
+
+    @Value("${javax.net.ssl.keyStore}")
+    private String keyStore;
+
+    @Value("${javax.net.ssl.keyStorePassword}")
+    private String keyStorePassword;
     
     @PostConstruct
     public void setOracleConnectionProperties() {
-        // Setting system properties for Oracle wallet location
-        System.setProperty("oracle.net.wallet_location", 
-                "(SOURCE=(METHOD=file)(METHOD_DATA=(DIRECTORY=/Users/spiegel/Documents/PROJECTS/borkacle/wallet)))");
-        System.setProperty("oracle.net.tns_admin", "/Users/spiegel/Documents/PROJECTS/borkacle/wallet");
-        
-        // Setting SSL properties
-        System.setProperty("javax.net.ssl.trustStore", "/Users/spiegel/Documents/PROJECTS/borkacle/wallet/truststore.jks");
-        System.setProperty("javax.net.ssl.trustStorePassword", "Borkacle123*");
-        System.setProperty("javax.net.ssl.keyStore", "/Users/spiegel/Documents/PROJECTS/borkacle/wallet/keystore.jks");
-        System.setProperty("javax.net.ssl.keyStorePassword", "Borkacle123*");
-        
-        logger.info("Oracle connection properties set successfully");
+        try {
+            // Setting system properties for Oracle wallet location
+            System.setProperty("oracle.net.wallet_location", walletLocation);
+            System.setProperty("oracle.net.tns_admin", tnsAdmin);
+            
+            // Setting SSL properties
+            System.setProperty("javax.net.ssl.trustStore", trustStore);
+            System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
+            System.setProperty("javax.net.ssl.keyStore", keyStore);
+            System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
+            
+            logger.info("Oracle connection properties set successfully");
+            logger.info("Using TNS_ADMIN: {}", tnsAdmin);
+            logger.info("Using wallet location: {}", walletLocation);
+        } catch (Exception e) {
+            logger.error("Error setting Oracle connection properties", e);
+        }
     }
     
     @Bean
     public DataSource dataSource() throws SQLException {
-        OracleDataSource ds = new OracleDataSource();
-        // ds.setDriverType(env.getProperty("driver_class_name"));
-        // logger.info("Using Driver " + env.getProperty("driver_class_name"));
-        // ds.setURL(env.getProperty("db_url"));
-        // logger.info("Using URL: " + env.getProperty("db_url"));
-        // ds.setUser(env.getProperty("db_user"));
-        // logger.info("Using Username " + env.getProperty("db_user"));
-        // ds.setPassword(env.getProperty("dbpassword"));
-        // For local testing
-        ds.setDriverType(dbSettings.getDriver_class_name());
-        logger.info("Using Driver " + dbSettings.getDriver_class_name());
-        ds.setURL(dbSettings.getUrl());
-        logger.info("Using URL: " + dbSettings.getUrl());
-        ds.setUser(dbSettings.getUsername());
-        logger.info("Using Username: " + dbSettings.getUsername());
-        ds.setPassword(dbSettings.getPassword());
-        
-        return ds;
+        try {
+            OracleDataSource ds = new OracleDataSource();
+            ds.setDriverType(driverClassName);
+            ds.setURL(jdbcUrl);
+            ds.setUser(username);
+            ds.setPassword(password);
+            
+            logger.info("Oracle DataSource configured successfully");
+            logger.info("Using URL: {}", jdbcUrl);
+            logger.info("Using Driver: {}", driverClassName);
+            logger.info("Using Username: {}", username);
+            
+            return ds;
+        } catch (SQLException e) {
+            logger.error("Error creating Oracle DataSource", e);
+            throw e;
+        }
     }
 }

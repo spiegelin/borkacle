@@ -5,3 +5,4 @@ wallet/
 application.properties
 tools/
 target/
+logs.log
