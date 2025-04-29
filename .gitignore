@@ -6,3 +6,5 @@ application.properties
 tools/
 target/
 logs.log
+
+node_modules/

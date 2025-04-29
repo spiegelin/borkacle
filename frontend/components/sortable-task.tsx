@@ -11,7 +11,7 @@ interface Task {
   title: string
   type: "bug" | "task" | "story" | "epic"
   priority: "highest" | "high" | "medium" | "low" | "lowest"
-  status: "todo" | "inProgress" | "review" | "done"
+  status: "todo" | "inProgress" | "review" | "done" | "blocked" | "cancelled"
   assignee?: {
     name: string
     avatar?: string
@@ -45,18 +45,21 @@ export function SortableTask({ task, getPriorityIcon, getTypeIcon }: SortableTas
       style={style}
       {...attributes}
       {...listeners}
-      className="bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+      className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-100"
     >
       <Link href={`/item/${task.id}`} className="block">
-        <div className="flex items-start gap-2">
-          <div className="flex items-center gap-1">
+        <div className="flex items-start gap-3">
+          <div className="flex items-center gap-2">
             {getTypeIcon(task.type)}
             {getPriorityIcon(task.priority)}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-[#3A3A3A] truncate">{task.title}</p>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{task.id}</span>
+            </div>
+            <p className="text-sm font-medium text-[#3A3A3A] mb-2">{task.title}</p>
             {task.assignee && (
-              <div className="flex items-center gap-1 mt-1">
+              <div className="flex items-center gap-1 mt-2">
                 <Avatar className="h-5 w-5">
                   {task.assignee.avatar && (
                     <AvatarImage src={task.assignee.avatar} alt={task.assignee.name} />
@@ -67,7 +70,7 @@ export function SortableTask({ task, getPriorityIcon, getTypeIcon }: SortableTas
               </div>
             )}
           </div>
-          <Button variant="ghost" size="icon" className="h-6 w-6">
+          <Button variant="ghost" size="icon" className="h-6 w-6 opacity-50 hover:opacity-100">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="16"

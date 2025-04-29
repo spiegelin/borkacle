@@ -2,7 +2,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 
 // Get the API URL from environment variables or use default
-const API_URL = process.env.CONTROLLER_SERVICE_URL || 'http://localhost:8080';
+const API_URL = process.env.NEXT_PUBLIC_CONTROLLER_API_URL || '/api';
 
 // Create an axios instance with a baseURL
 const api = axios.create({
