@@ -1,4 +1,4 @@
-import { UserProfileSettings } from "@/components/user-profile-settings"
+import { UserProfileSettings } from "@/components/auth/UserProfileSettings"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"

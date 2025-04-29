@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { CreateTaskDialog } from "@/components/create-task-dialog"
+import { CreateTaskDialog } from "@/components/ui/CreateTaskDialog"
 import { useRouter } from "next/navigation"
 
 interface Task {

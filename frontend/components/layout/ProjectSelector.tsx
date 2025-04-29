@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { CreateProjectDialog } from "@/components/create-project-dialog"
+import { CreateProjectDialog } from "@/components/ui/CreateProjectDialog"
 
 interface Project {
   id: string

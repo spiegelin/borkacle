@@ -1,12 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { DashboardLayout } from "@/components/dashboard-layout"
-import { TaskBoard } from "@/components/task-board"
-import { Backlog } from "@/components/backlog"
-import { Sprints } from "@/components/sprints"
-import { Reports } from "@/components/reports"
-import { Settings } from "@/components/settings"
+import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import { TaskBoard } from "@/components/project/TaskBoard"
+import { Backlog } from "@/components/project/Backlog"
+import { Sprints } from "@/components/project/Sprints"
+import { Reports } from "@/components/dashboard/Reports"
+import { Settings } from "@/components/ui/Settings"
 
 export default function Dashboard() {
   const [activeView, setActiveView] = useState("board")

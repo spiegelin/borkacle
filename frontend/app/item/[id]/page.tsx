@@ -2,42 +2,15 @@
 
 import { useParams } from "next/navigation"
 import { useState, useEffect } from "react"
-import { TaskView } from "@/components/task-view"
-import { StoryView } from "@/components/story-view"
-import { BugView } from "@/components/bug-view"
+import { TaskView } from "@/components/tasks/TaskView"
+import { StoryView } from "@/components/tasks/StoryView"
+import { BugView } from "@/components/tasks/BugView"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import type { ItemType as Item, TaskItem, StoryItem, BugItem, Priority, Status } from '@/types/item'
 
-type Priority = "highest" | "high" | "medium" | "low" | "lowest"
-type Status = "to do" | "in progress" | "review" | "done"
-
-interface BaseItem {
-  id: string
-  title: string
-  priority: Priority
-  status: Status
-  assignee?: {
-    name: string
-    avatar?: string
-    initials: string
-  }
-}
-
-interface TaskItem extends BaseItem {
-  type: "task"
-}
-
-interface StoryItem extends BaseItem {
-  type: "story"
-}
-
-interface BugItem extends BaseItem {
-  type: "bug"
-}
-
-type Item = TaskItem | StoryItem | BugItem
-
+// Re-added MockItems type definition
 type MockItems = {
   [key: string]: Item
 }

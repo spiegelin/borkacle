@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { CreateSprintDialog } from "@/components/create-sprint-dialog"
-import { SprintBoard } from "@/components/sprint-board"
+import { CreateSprintDialog } from "@/components/ui/CreateSprintDialog"
+import { SprintBoard } from "@/components/project/SprintBoard"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 interface Sprint {

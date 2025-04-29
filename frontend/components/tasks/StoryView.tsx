@@ -1,22 +1,12 @@
-import { ItemHeader } from "./item-header"
-import { CommentsSection } from "./comments-section"
+import { ItemHeader } from "@/components/layout/ItemHeader"
+import { CommentsSection } from "@/components/ui/CommentsSection"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import type { StoryItem } from "@/types/item"
 
 interface StoryViewProps {
-  item: {
-    id: string
-    title: string
-    type: "story"
-    priority: "highest" | "high" | "medium" | "low" | "lowest"
-    status: "to do" | "in progress" | "review" | "done"
-    assignee?: {
-      name: string
-      avatar?: string
-      initials: string
-    }
-  }
+  item: StoryItem
   onStatusChange: (newStatus: string) => void
 }
 

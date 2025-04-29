@@ -13,26 +13,27 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import type { Priority, Status } from "@/types/item"
 
 interface ItemHeaderProps {
   id: string
   title: string
-  type: "bug" | "task" | "story"
-  priority: "highest" | "high" | "medium" | "low" | "lowest"
-  status: "to do" | "in progress" | "review" | "done"
+  type: "bug" | "task" | "story" | "epic"
+  priority: Priority
+  status: Status
   assignee?: {
     name: string
     avatar?: string
     initials: string
   }
-  onStatusChange: (newStatus: "to do" | "in progress" | "review" | "done") => void
+  onStatusChange: (newStatus: Status) => void
 }
 
 export function ItemHeader({ id, title, type, priority, status, assignee, onStatusChange }: ItemHeaderProps) {
-  const [currentStatus, setCurrentStatus] = useState<"to do" | "in progress" | "review" | "done">(status)
+  const [currentStatus, setCurrentStatus] = useState<Status>(status)
   const [currentAssignee, setCurrentAssignee] = useState(assignee)
 
-  const handleStatusChange = (newStatus: "to do" | "in progress" | "review" | "done") => {
+  const handleStatusChange = (newStatus: Status) => {
     setCurrentStatus(newStatus)
     onStatusChange(newStatus)
   }
@@ -45,10 +46,29 @@ export function ItemHeader({ id, title, type, priority, status, assignee, onStat
         return <CheckCircle2 className="h-5 w-5 text-[#3A3A3A]" />
       case "story":
         return <Clock className="h-5 w-5 text-[#707070]" />
+      case "epic":
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="lucide lucide-layers text-[#C74634]"
+          >
+            <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" />
+            <path d="m22 12.5-8.58 3.91a2 2 0 0 1-1.66 0L2.6 12.5" />
+            <path d="m22 17.5-8.58 3.91a2 2 0 0 1-1.66 0L2.6 17.5" />
+          </svg>
+        )
     }
   }
 
-  const getPriorityIcon = (priority: ItemHeaderProps["priority"]) => {
+  const getPriorityIcon = (priority: Priority) => {
     switch (priority) {
       case "highest":
         return <ArrowUpRight className="h-4 w-4 text-[#C74634]" />
@@ -63,16 +83,25 @@ export function ItemHeader({ id, title, type, priority, status, assignee, onStat
     }
   }
 
-  const getStatusColor = (status: ItemHeaderProps["status"]) => {
+  const getStatusColor = (status: Status) => {
     switch (status) {
-      case "to do":
+      case "todo":
         return "bg-gray-100 text-[#3A3A3A]"
-      case "in progress":
+      case "inProgress":
         return "bg-orange-100 text-[#C74634]"
       case "review":
         return "bg-gray-200 text-[#707070]"
       case "done":
         return "bg-green-100 text-green-700"
+    }
+  }
+
+  const getStatusText = (status: Status) => {
+    switch(status) {
+      case "todo": return "To Do";
+      case "inProgress": return "In Progress";
+      case "review": return "Review";
+      case "done": return "Done";
     }
   }
 
@@ -89,15 +118,15 @@ export function ItemHeader({ id, title, type, priority, status, assignee, onStat
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="w-[130px]">
-              <Badge className={`mr-2 ${getStatusColor(currentStatus)}`}>{currentStatus}</Badge>
+              <Badge className={`mr-2 ${getStatusColor(currentStatus)}`}>{getStatusText(currentStatus)}</Badge>
               <ChevronDown className="h-4 w-4 opacity-50" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Set status</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => handleStatusChange("to do")}>To Do</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleStatusChange("in progress")}>In Progress</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleStatusChange("todo")}>To Do</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleStatusChange("inProgress")}>In Progress</DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleStatusChange("review")}>Review</DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleStatusChange("done")}>Done</DropdownMenuItem>
           </DropdownMenuContent>

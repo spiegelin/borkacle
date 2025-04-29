@@ -23,20 +23,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-import { SortableTask } from "@/components/sortable-task"
-
-interface Task {
-  id: string
-  title: string
-  type: "bug" | "task" | "story" | "epic"
-  priority: "highest" | "high" | "medium" | "low" | "lowest"
-  status: "todo" | "inProgress" | "review" | "done"
-  assignee?: {
-    name: string
-    avatar?: string
-    initials: string
-  }
-}
+import { SortableTask } from "@/components/tasks/SortableTask"
+import type { ItemType as Task, Priority, Status } from "@/types/item"
 
 interface Column {
   id: string
@@ -158,50 +146,53 @@ export function SprintBoard({ sprintId, sprintName, sprintDateRange }: SprintBoa
       return
     }
 
-    // Find which columns contain the dragged and target items
     let sourceColumnId = ""
     let destinationColumnId = ""
     let sourceIndex = -1
     let destinationIndex = -1
     
     Object.entries(columns).forEach(([columnId, column]) => {
-      const activeIndex = column.tasks.findIndex((task: Task) => task.id === activeId)
-      const overIndex = column.tasks.findIndex((task: Task) => task.id === overId)
+      const activeIndex = column.tasks.findIndex((task: Task) => task.id === activeId);
       
       if (activeIndex !== -1) {
-        sourceColumnId = columnId
-        sourceIndex = activeIndex
+          sourceColumnId = columnId;
+          sourceIndex = activeIndex;
       }
       
-      if (overIndex !== -1) {
-        destinationColumnId = columnId
-        destinationIndex = overIndex
+      // Check if overId is a column ID directly (dropping onto column)
+      if (overId === columnId) {
+          destinationColumnId = columnId;
+          // Set destinationIndex to the end of the tasks array
+          destinationIndex = column.tasks.length;
+      } else {
+          // Check if overId is a task ID within the column
+          const overIndex = column.tasks.findIndex((task: Task) => task.id === overId);
+          if (overIndex !== -1) {
+              destinationColumnId = columnId;
+              destinationIndex = overIndex;
+          }
       }
-    })
+  });
     
     if (sourceColumnId === "" || destinationColumnId === "") {
+      console.warn("Drag ended over invalid target", { activeId, overId });
       return
     }
 
-    // Create new columns object
     const newColumns = { ...columns }
     
-    // Get the task being moved
     const sourceColumn = newColumns[sourceColumnId as keyof Columns]
     const [movedTask] = sourceColumn.tasks.splice(sourceIndex, 1)
     
-    // Update the task's status based on the destination column
-    movedTask.status = destinationColumnId as Task["status"]
+    movedTask.status = destinationColumnId as Status
     
-    // Insert the task into the destination column
     const destinationColumn = newColumns[destinationColumnId as keyof Columns]
     destinationColumn.tasks.splice(destinationIndex, 0, movedTask)
     
-    // Update state
     setColumns(newColumns)
   }
 
-  const getPriorityIcon = (priority: Task["priority"]) => {
+  const getPriorityIcon = (priority: Priority) => {
     switch (priority) {
       case "highest":
         return <ArrowUpRight className="h-3 w-3 text-[#F80000]" />

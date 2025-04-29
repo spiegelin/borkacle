@@ -24,9 +24,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { CreateTaskDialog } from "@/components/create-task-dialog"
-import { SortableTask } from "@/components/sortable-task"
+import { CreateTaskDialog } from "@/components/ui/CreateTaskDialog"
+import { SortableTask } from "@/components/tasks/SortableTask"
 import api from "@/lib/api"
+import type { ItemType as Task, Priority, Status } from "@/types/item"
 
 interface Task {
   id: string
@@ -158,8 +159,18 @@ export function TaskBoard() {
   function handleCreateTask(newTask: Task) {
     const status = newTask.status || "todo"
     const columnCopy = { ...columns }
-    columnCopy[status].tasks = [...columnCopy[status].tasks, newTask]
-    setColumns(columnCopy)
+    if (status in columnCopy) {
+        columnCopy[status as keyof Columns].tasks = [
+            ...columnCopy[status as keyof Columns].tasks,
+            newTask,
+        ];
+        setColumns(columnCopy);
+    } else {
+        console.error(`Invalid status '{status}' for task:`, newTask);
+        // Optionally handle the error, e.g., default to 'todo'
+        // columnCopy['todo'].tasks.push(newTask);
+        // setColumns(columnCopy);
+    }
   }
 
   // Mueve la tarea de columna al soltar
@@ -185,20 +196,29 @@ export function TaskBoard() {
     
     Object.entries(columns).forEach(([columnId, column]) => {
       const activeIndex = column.tasks.findIndex((task: Task) => task.id === activeId)
-      const overIndex = column.tasks.findIndex((task: Task) => task.id === overId)
       
       if (activeIndex !== -1) {
         sourceColumnId = columnId
         sourceIndex = activeIndex
       }
       
-      if (overIndex !== -1) {
-        destinationColumnId = columnId
-        destinationIndex = overIndex
+      // Check if overId is a column ID directly (dropping onto column)
+      if (overId === columnId) {
+          destinationColumnId = columnId;
+          // Set destinationIndex to the end of the tasks array
+          destinationIndex = column.tasks.length;
+      } else {
+          // Check if overId is a task ID within the column
+          const overIndex = column.tasks.findIndex((task: Task) => task.id === overId);
+          if (overIndex !== -1) {
+              destinationColumnId = columnId;
+              destinationIndex = overIndex;
+          }
       }
     })
     
     if (sourceColumnId === "" || destinationColumnId === "") {
+        console.warn("Drag ended over invalid target", { activeId, overId });
       return
     }
 
@@ -206,14 +226,16 @@ export function TaskBoard() {
     const newColumns = { ...columns }
     
     // Get the task being moved
-    const sourceColumn = newColumns[sourceColumnId]
+    const sourceColumn = newColumns[sourceColumnId as keyof Columns]
     const [movedTask] = sourceColumn.tasks.splice(sourceIndex, 1)
     
     // Update the task's status based on the destination column
-    movedTask.status = destinationColumnId as Task["status"]
+    movedTask.status = destinationColumnId as Status
     
     // Insert the task into the destination column
-    const destinationColumn = newColumns[destinationColumnId]
+    const destinationColumn = newColumns[destinationColumnId as keyof Columns]
+    // If dropping onto a column directly, destinationIndex was set to length
+    // Otherwise, it's the index of the task dropped onto
     destinationColumn.tasks.splice(destinationIndex, 0, movedTask)
     
     // Update state
@@ -256,7 +278,7 @@ export function TaskBoard() {
     }
   }
 
-  const getPriorityIcon = (priority: Task["priority"]) => {
+  const getPriorityIcon = (priority: Priority) => {
     switch (priority) {
       case "highest":
         return <ArrowUpRight className="h-3 w-3 text-[#F80000]" />
