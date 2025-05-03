@@ -2,7 +2,10 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 
 // Get the API URL from environment variables or use default
-const API_URL = process.env.NEXT_PUBLIC_CONTROLLER_API_URL || '/api';
+// It is not possible to use the CONTROLLER_SERVICE_URL because it is not available
+// .env variables are only available during the build process
+// So we use the NEXT_PUBLIC_CONTROLLER_API_URL instead
+const API_URL = process.env.NEXT_PUBLIC_CONTROLLER_API_URL || 'http://localhost:8080';
 
 // Create an axios instance with a baseURL
 const api = axios.create({

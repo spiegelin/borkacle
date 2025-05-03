@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { User, login as authLogin, signup as authSignup, logout as authLogout, isAuthenticated, getCurrentUser } from '@/lib/auth';
 
 // Define context types
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;

@@ -23,38 +23,17 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins(allowedOrigins.split(","))
+                .allowedOrigins(
+                    "http://localhost", 
+                    "http://localhost:3000",
+                    "http://frontend", 
+                    "https://frontend",
+                    "http://bot",
+                    "https://bot"
+                )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true)
                 .maxAge(3600); // 1 hour max age
-    }
-    
-    @Bean
-    public CorsFilter corsFilter() {
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        CorsConfiguration config = new CorsConfiguration();
-        
-        // Allow requests from configured origins
-        Arrays.stream(allowedOrigins.split(","))
-              .forEach(origin -> config.addAllowedOrigin(origin.trim()));
-        
-        // Allow common HTTP methods
-        config.addAllowedMethod("GET");
-        config.addAllowedMethod("POST");
-        config.addAllowedMethod("PUT");
-        config.addAllowedMethod("DELETE");
-        config.addAllowedMethod("OPTIONS");
-        
-        // Allow all headers
-        config.addAllowedHeader("*");
-        
-        // Allow cookies and auth headers
-        config.setAllowCredentials(true);
-        
-        // Apply this config to all paths
-        source.registerCorsConfiguration("/**", config);
-        
-        return new CorsFilter(source);
     }
 } 

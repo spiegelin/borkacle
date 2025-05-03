@@ -22,7 +22,7 @@ const mockItems: MockItems = {
     type: "task",
     title: "Setup cloud infrastructure",
     priority: "high",
-    status: "to do",
+    status: "todo",
     assignee: { name: "John Doe", initials: "JD" },
   },
   "ORA-2346": {
@@ -30,7 +30,7 @@ const mockItems: MockItems = {
     type: "story",
     title: "Database migration plan",
     priority: "highest",
-    status: "to do",
+    status: "todo",
     assignee: { name: "Jane Smith", initials: "JS" },
   },
   "ORA-2347": {
@@ -38,7 +38,7 @@ const mockItems: MockItems = {
     type: "bug",
     title: "Login page not responsive",
     priority: "medium",
-    status: "in progress",
+    status: "inProgress",
     assignee: { name: "Mike Johnson", initials: "MJ" },
   },
 }
