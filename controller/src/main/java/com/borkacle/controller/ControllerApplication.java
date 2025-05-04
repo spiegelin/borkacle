@@ -17,10 +17,12 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
 @EntityScan("com.borkacle.model")
 @EnableJpaRepositories("com.borkacle.repository")
+@ComponentScan(basePackages = "com.borkacle")
 public class ControllerApplication {
 
     private static final Logger log = LoggerFactory.getLogger(ControllerApplication.class);

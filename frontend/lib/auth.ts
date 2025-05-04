@@ -73,10 +73,22 @@ export const signup = async (userData: {
 };
 
 // Logout function
-export const logout = (): void => {
+export const logout = async (): Promise<void> => {
   removeAuthCookie();
   localStorage.removeItem('user');
-  // Redirect handled by the component
+  
+  try {
+    // Call the backend logout endpoint using the api instance
+    await api.post('/api/auth/logout'); 
+    // No need to handle response data for logout usually
+    //console.log("Logout API call successful");
+  } catch (error) {
+    console.error('Logout API call failed:', error);
+    // Optionally, handle error (e.g., show notification), 
+    // but logout should proceed client-side regardless.
+  }
+  
+  // Redirect handled by the component that calls this function
 };
 
 // Check if user is authenticated

@@ -1,6 +1,7 @@
 package com.borkacle.repository;
 
 import com.borkacle.model.Tarea;
+import com.borkacle.model.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -23,4 +24,20 @@ public interface TareaRepository extends JpaRepository<Tarea, Long> {
     
     @Query("SELECT t FROM Tarea t WHERE t.asignadoA.id = :usuarioId AND t.sprint.id = :sprintId")
     List<Tarea> findByUsuarioIdAndSprintId(@Param("usuarioId") Long usuarioId, @Param("sprintId") Long sprintId);
+
+    List<Tarea> findByAsignadoA(Usuario usuario);
+    List<Tarea> findByEstadoId(Long estadoId);
+
+    @Query("SELECT t.id, t.titulo, t.descripcion, t.fechaCreacion, e.nombre as estadoNombre " +
+           "FROM Tarea t " +
+           "JOIN t.estado e " +
+           "ORDER BY t.fechaCreacion DESC")
+    List<Object[]> findAllWithEstado();
+
+    @Query("SELECT t.id, t.titulo, t.descripcion, t.fechaCreacion, e.nombre as estadoNombre, u.nombre as usuarioNombre " +
+           "FROM Tarea t " +
+           "LEFT JOIN t.estado e " +
+           "LEFT JOIN t.asignadoA u " +
+           "ORDER BY t.fechaCreacion DESC")
+    List<Object[]> findAllWithEstadoAndUser();
 } 

@@ -83,4 +83,15 @@ public class AuthController {
 
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }
+
+    // --- Logout Endpoint --- //
+    @PostMapping("/logout")
+    public ResponseEntity<?> logoutUser() {
+        // For stateless JWT, the primary action is on the client (discarding the token).
+        // This backend endpoint acknowledges the request and potentially allows for future
+        // server-side invalidation logic (e.g., token blocklisting) if implemented.
+        // SecurityContextHolder.clearContext(); // Use if using Spring Security sessions
+
+        return ResponseEntity.ok().body("Logout successful");
+    }
 } 

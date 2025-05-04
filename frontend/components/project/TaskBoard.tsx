@@ -27,7 +27,7 @@ import { Badge } from "@/components/ui/badge"
 import { CreateTaskDialog } from "@/components/ui/CreateTaskDialog"
 import { SortableTask } from "@/components/tasks/SortableTask"
 import api from "@/lib/api"
-import type { ItemType as Task, Priority, Status } from "@/types/item"
+import type { ItemType as Task2, Priority, Status } from "@/types/item"
 
 interface Task {
   id: string
