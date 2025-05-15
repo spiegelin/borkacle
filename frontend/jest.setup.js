@@ -1,11 +1,40 @@
-import '@testing-library/jest-dom';
-import { server } from './src/mocks/server';
+import '@testing-library/jest-dom'
 
-// Establish API mocking before all tests
-beforeAll(() => server.listen());
+// Mock ResizeObserver
+global.ResizeObserver = class ResizeObserver {
+  constructor(callback) {
+    this.callback = callback;
+  }
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
 
-// Reset any request handlers that we may add during the tests
-afterEach(() => server.resetHandlers());
+// Mock next/router
+jest.mock('next/router', () => ({
+  useRouter() {
+    return {
+      route: '/',
+      pathname: '',
+      query: {},
+      asPath: '',
+      push: jest.fn(),
+      replace: jest.fn()
+    }
+  }
+}))
 
-// Clean up after the tests are finished
-afterAll(() => server.close()); 
+// Mock next/image
+jest.mock('next/image', () => ({
+  __esModule: true,
+  default: (props) => {
+    return `[Image: ${props.alt || 'no alt'}]`
+  }
+}))
+
+// Mock next/link
+jest.mock('next/link', () => {
+  return ({ children, href }) => {
+    return `[Link: ${href}]${children}`
+  }
+}) 

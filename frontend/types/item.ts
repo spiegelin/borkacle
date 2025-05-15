@@ -1,5 +1,8 @@
 // types/item.ts
 
+export type Priority = "highest" | "high" | "medium" | "low" | "lowest";
+export type Status = "todo" | "inProgress" | "review" | "done";
+
 export type BaseItem = {
     id: string
     title: string
@@ -12,20 +15,26 @@ export type BaseItem = {
   
   export type TaskItem = BaseItem & {
     type: "task"
-    priority: "high" | "highest" | "medium" | "low" | "lowest"
-    status: "to do" | "in progress" | "review" | "done"
+    priority: Priority
+    status: Status
   }
   
   export type StoryItem = BaseItem & {
     type: "story"
-    priority: "high" | "highest" | "medium" | "low" | "lowest"
-    status: "to do" | "in progress" | "review" | "done"
+    priority: Priority
+    status: Status
   }
   
   export type BugItem = BaseItem & {
     type: "bug"
-    priority: "high" | "highest" | "medium" | "low" | "lowest"
-    status: "to do" | "in progress" | "review" | "done"
+    priority: Priority
+    status: Status
   }
   
-  export type ItemType = TaskItem | StoryItem | BugItem
+  export type EpicItem = BaseItem & {
+    type: "epic"
+    priority: Priority
+    status: Status
+  }
+  
+  export type ItemType = TaskItem | StoryItem | BugItem | EpicItem;

@@ -6,3 +6,8 @@ application.properties
 tools/
 target/
 logs.log
+
+node_modules/
+wallet.zip
+test.sh
+results/
