@@ -41,6 +41,8 @@ async function handleProxyRequest(req: NextRequest) {
     }
   });
 
+  //console.log(`Headers to forward: ${JSON.stringify(Object.fromEntries(headersToForward.entries()))}`);
+
   try {
     const response = await fetch(targetUrl, {
       method: req.method,

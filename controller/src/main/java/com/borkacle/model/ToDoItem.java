@@ -1,4 +1,4 @@
-package com.springboot.MyTodoList.model;
+package com.borkacle.model;
 
 
 import java.time.OffsetDateTime;
