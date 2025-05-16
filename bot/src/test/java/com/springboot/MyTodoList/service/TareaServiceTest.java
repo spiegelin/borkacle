@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -39,8 +40,9 @@ public class TareaServiceTest {
 
     private Tarea tarea;
     private Usuario usuario;
-    private Estado estado;
-    private Prioridad prioridad;
+    private Estado estadoPendiente;
+    private Estado estadoCompletado;
+    private Prioridad prioridadMedia;
     private Sprint sprint;
 
     @BeforeEach
@@ -52,13 +54,17 @@ public class TareaServiceTest {
         usuario.setId(1L);
         usuario.setNombre("Test User");
 
-        estado = new Estado();
-        estado.setId(1L);
-        estado.setNombre("Pendiente");
+        estadoPendiente = new Estado();
+        estadoPendiente.setId(1L);
+        estadoPendiente.setNombre("Pendiente");
 
-        prioridad = new Prioridad();
-        prioridad.setId(1L);
-        prioridad.setNombre("Alta");
+        estadoCompletado = new Estado();
+        estadoCompletado.setId(2L);
+        estadoCompletado.setNombre("Completado");
+
+        prioridadMedia = new Prioridad();
+        prioridadMedia.setId(1L);
+        prioridadMedia.setNombre("Media");
 
         sprint = new Sprint();
         sprint.setId(1L);
@@ -68,8 +74,8 @@ public class TareaServiceTest {
         tarea.setId(1L);
         tarea.setTitulo("Test Task");
         tarea.setDescripcion("Test Description");
-        tarea.setEstado(estado);
-        tarea.setPrioridad(prioridad);
+        tarea.setEstado(estadoPendiente);
+        tarea.setPrioridad(prioridadMedia);
         tarea.setAsignadoA(usuario);
         tarea.setSprint(sprint);
         tarea.setFechaCreacion(OffsetDateTime.now());
@@ -78,20 +84,21 @@ public class TareaServiceTest {
 
     @Test
     void createTarea_ValidRequest_ReturnsCreatedTarea() {
-        // Arrange
-        when(estadoService.findByNombre("Pendiente")).thenReturn(estado);
-        when(prioridadService.findById(1L)).thenReturn(prioridad);
-        when(tareaRepository.save(any(Tarea.class))).thenReturn(tarea);
-
-        // Act
-        Tarea result = tareaService.createTarea("Test Task", "Test Description", 5.0, 1L, 1L);
-
-        // Assert
+        when(estadoService.findByNombre("Pendiente")).thenReturn(estadoPendiente);
+        when(prioridadService.findById(1L)).thenReturn(prioridadMedia);
+        Tarea tareaMock = new Tarea();
+        tareaMock.setId(1L);
+        tareaMock.setTitulo("Nueva Tarea");
+        tareaMock.setDescripcion("Descripción de la nueva tarea");
+        tareaMock.setEstado(estadoPendiente);
+        tareaMock.setPrioridad(prioridadMedia);
+        tareaMock.setProyectoId(1L);
+        when(tareaRepository.save(any(Tarea.class))).thenReturn(tareaMock);
+        Tarea result = tareaService.createTarea("Nueva Tarea", "Descripción de la nueva tarea", 5.0, 1L, 1L);
         assertNotNull(result);
-        assertEquals("Test Task", result.getTitulo());
-        assertEquals("Test Description", result.getDescripcion());
-        assertEquals(estado, result.getEstado());
-        assertEquals(prioridad, result.getPrioridad());
+        assertEquals("Nueva Tarea", result.getTitulo());
+        assertEquals(estadoPendiente, result.getEstado());
+        assertEquals(prioridadMedia, result.getPrioridad());
         verify(tareaRepository).save(any(Tarea.class));
     }
 
@@ -142,8 +149,8 @@ public class TareaServiceTest {
     void updateTask_ValidRequest_ReturnsUpdatedTarea() {
         // Arrange
         when(tareaRepository.findById(1L)).thenReturn(Optional.of(tarea));
-        when(estadoService.findById(1L)).thenReturn(estado);
-        when(prioridadService.findById(1L)).thenReturn(prioridad);
+        when(estadoService.findById(1L)).thenReturn(estadoPendiente);
+        when(prioridadService.findById(1L)).thenReturn(prioridadMedia);
         when(sprintService.findById(1L)).thenReturn(sprint);
         when(tareaRepository.save(any(Tarea.class))).thenReturn(tarea);
 
@@ -154,8 +161,8 @@ public class TareaServiceTest {
         assertNotNull(result);
         assertEquals("Updated Task", result.getTitulo());
         assertEquals("Updated Description", result.getDescripcion());
-        assertEquals(estado, result.getEstado());
-        assertEquals(prioridad, result.getPrioridad());
+        assertEquals(estadoPendiente, result.getEstado());
+        assertEquals(prioridadMedia, result.getPrioridad());
         assertEquals(sprint, result.getSprint());
         verify(tareaRepository).save(any(Tarea.class));
     }
@@ -222,7 +229,7 @@ public class TareaServiceTest {
     void getTareasByEstado_ReturnsEstadoTareas() {
         // Arrange
         List<Tarea> tareas = Arrays.asList(tarea);
-        when(estadoService.findByNombre("Pendiente")).thenReturn(estado);
+        when(estadoService.findByNombre("Pendiente")).thenReturn(estadoPendiente);
         when(tareaRepository.findByEstadoId(1L)).thenReturn(tareas);
 
         // Act
@@ -232,5 +239,52 @@ public class TareaServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals(tarea, result.get(0));
+    }
+
+    @Test
+    void getTareasCompletadasBySprint_ReturnsCompletedTareas() {
+        List<Tarea> tareas = Arrays.asList(
+            buildTarea(1L, "Tarea 1", estadoCompletado, prioridadMedia, usuario, sprint),
+            buildTarea(2L, "Tarea 2", estadoPendiente, prioridadMedia, usuario, sprint)
+        );
+        when(tareaRepository.findBySprintId(1L)).thenReturn(tareas);
+        when(estadoService.findByNombre("Completado")).thenReturn(estadoCompletado);
+        List<Tarea> result = tareaService.getTareasBySprint(1L);
+        // Filtrar completadas
+        List<Tarea> completadas = result.stream().filter(t -> t.getEstado().getNombre().equals("Completado")).toList();
+        assertEquals(1, completadas.size());
+        assertEquals("Tarea 1", completadas.get(0).getTitulo());
+        verify(tareaRepository).findBySprintId(1L);
+    }
+
+    @Test
+    void getTareasCompletadasByUsuarioAndSprint_ReturnsCompletedTareas() {
+        List<Tarea> tareas = Arrays.asList(
+            buildTarea(1L, "Tarea 1", estadoCompletado, prioridadMedia, usuario, sprint),
+            buildTarea(2L, "Tarea 2", estadoPendiente, prioridadMedia, usuario, sprint)
+        );
+        when(tareaRepository.findByAsignadoA(usuario)).thenReturn(tareas);
+        when(estadoService.findByNombre("Completado")).thenReturn(estadoCompletado);
+        List<Tarea> result = tareaService.getTareasByUsuario(usuario);
+        // Filtrar por sprint y completadas
+        List<Tarea> completadas = result.stream()
+            .filter(t -> t.getSprint() != null && t.getSprint().getId().equals(1L))
+            .filter(t -> t.getEstado().getNombre().equals("Completado"))
+            .toList();
+        assertEquals(1, completadas.size());
+        assertEquals("Tarea 1", completadas.get(0).getTitulo());
+        verify(tareaRepository).findByAsignadoA(usuario);
+    }
+
+    // Utilidad para crear tareas de prueba
+    private Tarea buildTarea(Long id, String titulo, Estado estado, Prioridad prioridad, Usuario usuario, Sprint sprint) {
+        Tarea tarea = new Tarea();
+        tarea.setId(id);
+        tarea.setTitulo(titulo);
+        tarea.setEstado(estado);
+        tarea.setPrioridad(prioridad);
+        tarea.setAsignadoA(usuario);
+        tarea.setSprint(sprint);
+        return tarea;
     }
 } 
