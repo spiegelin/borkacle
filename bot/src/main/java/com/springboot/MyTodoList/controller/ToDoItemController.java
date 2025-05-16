@@ -23,12 +23,7 @@ public class ToDoItemController {
     //@CrossOrigin
     @GetMapping(value = "/todolist/{id}")
     public ResponseEntity<ToDoItem> getToDoItemById(@PathVariable int id){
-        try{
-            ResponseEntity<ToDoItem> responseEntity = toDoItemService.getItemById(id);
-            return new ResponseEntity<ToDoItem>(responseEntity.getBody(), HttpStatus.OK);
-        }catch (Exception e){
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        return toDoItemService.getItemById(id);
     }
     //@CrossOrigin
     @PostMapping(value = "/todolist")
@@ -59,7 +54,11 @@ public class ToDoItemController {
         Boolean flag = false;
         try{
             flag = toDoItemService.deleteToDoItem(id);
-            return new ResponseEntity<>(flag, HttpStatus.OK);
+            if(flag) {
+                return new ResponseEntity<>(flag, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(flag, HttpStatus.NOT_FOUND);
+            }
         }catch (Exception e){
             return new ResponseEntity<>(flag,HttpStatus.NOT_FOUND);
         }
