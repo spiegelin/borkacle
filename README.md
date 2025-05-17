@@ -7,7 +7,7 @@ Borkacle is a distributed task and sprint management system consisting of three 
 *   **User Authentication:** Login, Signup, Logout.
 *   **Task Management:** Create, Read, Update, Delete (implicitly via status change), List tasks.
 *   **Task Assignment:** Assign tasks to users and sprints.
-*   **Task Workflow:** Update task status (e.g., Pending, In Progress, Completed), assign priority, log completion time.
+*   **Task Workflow:** Update task status (Pending, In Progress, Completed), assign priority, log completion time.
 *   **Sprint Management:** Create, List sprints with associated tasks, View sprint details.
 *   **User Management:** List users (with team info), View user details, Update user information.
 *   **Telegram Bot:** Interact with tasks/sprints via Telegram commands (provided by the `bot` service).
