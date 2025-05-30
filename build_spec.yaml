@@ -20,10 +20,15 @@ steps:
         --password "${DEVOPS_AUTH_TOKEN}"
 
   - type: Command
-    name: Build and Push Frontend
+    name: Build Frontend
     command: |
       docker build -t ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${IMAGE_TAG} ./frontend
+
+  - type: Command
+    name: Push Frontend
+    command: |
       docker push ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${IMAGE_TAG}
+
 
   - type: Command
     name: Build and Push Bot
