@@ -1,67 +1,69 @@
 version: 0.1
 component: build
-shell: bash
+
+timeoutInSeconds: 3600
 
 env:
   variables:
-    REGION: mx-queretaro-1
-    REGISTRY_NAMESPACE: axtwc9mqbq4b
+    REGISTRY: mx-queretaro-1.ocir.io
+    NAMESPACE: axtwc9mqbq4b
+    FRONTEND_REPO: borkacle-frontend
+    BOT_REPO: borkacle-bot
+    CONTROLLER_REPO: borkacle-controller
+
+exportedVariables:
+  - BUILDRUN_HASH
 
 steps:
   - type: Command
     name: Login to OCIR
     command: |
-      echo "Logging in to OCIR..."
-      docker login ${REGION}.ocir.io \
-        --username "${DEVOPS_USERNAME}" \
-        --password "${DEVOPS_AUTH_TOKEN}"
+      echo "🔑 Autenticando en OCIR..."
+      echo "${DEVOPS_AUTH_TOKEN}" \
+        | docker login $REGISTRY \
+            -u "${DEVOPS_USERNAME}" \
+            --password-stdin
 
   - type: Command
-    name: DockerHub Login
+    name: Define unique image tag
+    timeoutInSeconds: 40
     command: |
-      echo "Logging in to DockerHub..."
-      echo "${DOCKERHUB_PASSWORD}" | docker login --username "${DOCKERHUB_USERNAME}" --password-stdin
+      export BUILDRUN_HASH=$(echo ${OCI_BUILD_RUN_ID} | rev | cut -c 1-7)
+      echo "BUILDRUN_HASH: $BUILDRUN_HASH"
 
   - type: Command
-    name: Build Frontend
+    name: Build & Push Frontend
     command: |
-      docker build -t ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${OCI_BUILD_RUN_ID} ./frontend
+      docker build --pull --no-cache \
+        -t ${REGISTRY}/${NAMESPACE}/${FRONTEND_REPO}:${BUILDRUN_HASH} \
+        ./frontend
+
+      docker push ${REGISTRY}/${NAMESPACE}/${FRONTEND_REPO}:${BUILDRUN_HASH}
 
   - type: Command
-    name: Push Frontend
+    name: Build & Push Bot
     command: |
-      docker push ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${OCI_BUILD_RUN_ID}
+      docker build --pull --no-cache \
+        -t ${REGISTRY}/${NAMESPACE}/${BOT_REPO}:${BUILDRUN_HASH} \
+        ./bot
+
+      docker push ${REGISTRY}/${NAMESPACE}/${BOT_REPO}:${BUILDRUN_HASH}
 
   - type: Command
-    name: Build Bot
+    name: Build & Push Controller
     command: |
-      docker build -t ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${OCI_BUILD_RUN_ID} ./bot
+      docker build --pull --no-cache \
+        -t ${REGISTRY}/${NAMESPACE}/${CONTROLLER_REPO}:${BUILDRUN_HASH} \
+        ./controller
+
+      docker push ${REGISTRY}/${NAMESPACE}/${CONTROLLER_REPO}:${BUILDRUN_HASH}
 
   - type: Command
-    name: Push Bot
+    name: Show Image URIs
     command: |
-      docker push ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${OCI_BUILD_RUN_ID}
-
-  - type: Command
-    name: Build Controller
-    command: |
-      docker build -t ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${OCI_BUILD_RUN_ID} ./controller
-
-  - type: Command
-    name: Push Controller
-    command: |
-      docker push ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${OCI_BUILD_RUN_ID}
-
-  - type: RunDeployment
-    name: Deploy Borkacle Images
-    deploymentPipelineId: ${DEPLOYMENT_PIPELINE_ID}
-    parameters:
-      - name: FRONTEND_IMAGE
-        value: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${OCI_BUILD_RUN_ID}
-      - name: BOT_IMAGE
-        value: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${OCI_BUILD_RUN_ID}
-      - name: CONTROLLER_IMAGE
-        value: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${OCI_BUILD_RUN_ID}
+      echo "FRONTEND_IMAGE=${REGISTRY}/${NAMESPACE}/${FRONTEND_REPO}:${BUILDRUN_HASH}"
+      echo "BOT_IMAGE=${REGISTRY}/${NAMESPACE}/${BOT_REPO}:${BUILDRUN_HASH}"
+      echo "CONTROLLER_IMAGE=${REGISTRY}/${NAMESPACE}/${CONTROLLER_REPO}:${BUILDRUN_HASH}"
 
 outputArtifacts:
   - name: frontend-deployment
