@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: bot
-          image: <region>/<ns>/borkacle-bot:1.0.1
+          image: ${BOT_IMAGE}
           ports:
             - containerPort: 8080
           envFrom:

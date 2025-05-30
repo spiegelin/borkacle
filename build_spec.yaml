@@ -36,12 +36,12 @@ steps:
 outputArtifacts:
   - name: frontend-deployment
     type: BINARY
-    location: frontend-deployment.yaml
+    location: k8s/frontend-deployment.yaml
 
   - name: bot-deployment
     type: BINARY
-    location: bot-deployment.yaml
+    location: k8s/bot-deployment.yaml
 
   - name: controller-deployment
     type: BINARY
-    location: controller-deployment.yaml
+    location: k8s/controller-deployment.yaml

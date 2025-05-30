@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: controller
-          image: <region>/<ns>/borkacle-controller:1.0.1
+          image: ${CONTROLLER_IMAGE}
           ports:
             - containerPort: 8080
           envFrom:
