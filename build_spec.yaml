@@ -77,3 +77,11 @@ outputArtifacts:
   - name: controller-deployment
     type: BINARY
     location: k8s/controller-deployment.yaml
+
+exportedVariables:
+  - name: FRONTEND_IMAGE
+    value: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${OCI_BUILD_RUN_ID}
+  - name: BOT_IMAGE
+    value: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${OCI_BUILD_RUN_ID}
+  - name: CONTROLLER_IMAGE
+    value: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${OCI_BUILD_RUN_ID}
