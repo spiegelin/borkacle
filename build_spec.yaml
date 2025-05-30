@@ -25,45 +25,43 @@ steps:
   - type: Command
     name: Build Frontend
     command: |
-      IMAGE_TAG=${OCI_BUILD_RUN_ID}
-      docker build -t ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${IMAGE_TAG} ./frontend
+      docker build -t ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${OCI_BUILD_RUN_ID} ./frontend
 
   - type: Command
     name: Push Frontend
     command: |
-      IMAGE_TAG=${OCI_BUILD_RUN_ID}
-      docker push ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${IMAGE_TAG}
+      docker push ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${OCI_BUILD_RUN_ID}
 
   - type: Command
     name: Build Bot
     command: |
-      IMAGE_TAG=${OCI_BUILD_RUN_ID}
-      docker build -t ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${IMAGE_TAG} ./bot
+      docker build -t ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${OCI_BUILD_RUN_ID} ./bot
 
   - type: Command
     name: Push Bot
     command: |
-      IMAGE_TAG=${OCI_BUILD_RUN_ID}
-      docker push ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${IMAGE_TAG}
+      docker push ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${OCI_BUILD_RUN_ID}
 
   - type: Command
     name: Build Controller
     command: |
-      IMAGE_TAG=${OCI_BUILD_RUN_ID}
-      docker build -t ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${IMAGE_TAG} ./controller
+      docker build -t ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${OCI_BUILD_RUN_ID} ./controller
 
   - type: Command
     name: Push Controller
     command: |
-      IMAGE_TAG=${OCI_BUILD_RUN_ID}
-      docker push ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${IMAGE_TAG}
+      docker push ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${OCI_BUILD_RUN_ID}
 
-  - type: Command
-    name: Show Image Tags
-    command: |
-      echo "Frontend Image: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${OCI_BUILD_RUN_ID}"
-      echo "Bot Image: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${OCI_BUILD_RUN_ID}"
-      echo "Controller Image: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${OCI_BUILD_RUN_ID}"
+  - type: RunDeployment
+    name: Deploy Borkacle Images
+    deploymentPipelineId: ${DEPLOYMENT_PIPELINE_ID}
+    parameters:
+      - name: FRONTEND_IMAGE
+        value: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${OCI_BUILD_RUN_ID}
+      - name: BOT_IMAGE
+        value: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${OCI_BUILD_RUN_ID}
+      - name: CONTROLLER_IMAGE
+        value: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${OCI_BUILD_RUN_ID}
 
 outputArtifacts:
   - name: frontend-deployment
@@ -77,11 +75,3 @@ outputArtifacts:
   - name: controller-deployment
     type: BINARY
     location: k8s/controller-deployment.yaml
-
-exportedVariables:
-  - name: FRONTEND_IMAGE
-    value: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${OCI_BUILD_RUN_ID}
-  - name: BOT_IMAGE
-    value: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${OCI_BUILD_RUN_ID}
-  - name: CONTROLLER_IMAGE
-    value: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${OCI_BUILD_RUN_ID}
