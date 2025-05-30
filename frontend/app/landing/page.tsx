@@ -31,11 +31,11 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row items-center gap-12">
             <div className="md:w-1/2 space-y-6">
               <h1 className="text-4xl md:text-5xl font-bold text-[#3A3A3A] leading-tight">
-                Manage your projects with ease using Oracle Cloud Tasks
+                Manage your projects with ease using Oracle Cloud Tasks, hola?
               </h1>
               <p className="text-lg text-gray-600">
                 A powerful project management tool designed for teams to track tasks, manage sprints, and deliver
-                projects on time.
+                projects on time. a ver
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/signup" passHref>

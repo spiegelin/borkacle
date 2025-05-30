@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: controller
-          image: mx-queretaro-1.ocir.io/axtwc9mqbq4b/borkacle-controller:1.0.3
+          image: ${CONTROLLER_IMAGE}
           ports:
             - containerPort: 8080
           envFrom:

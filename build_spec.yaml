@@ -1,0 +1,79 @@
+version: 0.1
+component: build
+shell: bash
+
+env:
+  variables:
+    REGION: mx-queretaro-1
+    REGISTRY_NAMESPACE: axtwc9mqbq4b
+
+steps:
+  - type: Command
+    name: Login to OCIR
+    command: |
+      echo "Logging in to OCIR..."
+      docker login ${REGION}.ocir.io \
+        --username "${DEVOPS_USERNAME}" \
+        --password "${DEVOPS_AUTH_TOKEN}"
+
+  - type: Command
+    name: DockerHub Login
+    command: |
+      echo "Logging in to DockerHub..."
+      echo "${DOCKERHUB_PASSWORD}" | docker login --username "${DOCKERHUB_USERNAME}" --password-stdin
+
+  - type: Command
+    name: Build Frontend
+    command: |
+      IMAGE_TAG=${OCI_BUILD_RUN_ID}
+      docker build -t ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${IMAGE_TAG} ./frontend
+
+  - type: Command
+    name: Push Frontend
+    command: |
+      IMAGE_TAG=${OCI_BUILD_RUN_ID}
+      docker push ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${IMAGE_TAG}
+
+  - type: Command
+    name: Build Bot
+    command: |
+      IMAGE_TAG=${OCI_BUILD_RUN_ID}
+      docker build -t ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${IMAGE_TAG} ./bot
+
+  - type: Command
+    name: Push Bot
+    command: |
+      IMAGE_TAG=${OCI_BUILD_RUN_ID}
+      docker push ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${IMAGE_TAG}
+
+  - type: Command
+    name: Build Controller
+    command: |
+      IMAGE_TAG=${OCI_BUILD_RUN_ID}
+      docker build -t ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${IMAGE_TAG} ./controller
+
+  - type: Command
+    name: Push Controller
+    command: |
+      IMAGE_TAG=${OCI_BUILD_RUN_ID}
+      docker push ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${IMAGE_TAG}
+
+  - type: Command
+    name: Show Image Tags
+    command: |
+      echo "Frontend Image: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${OCI_BUILD_RUN_ID}"
+      echo "Bot Image: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${OCI_BUILD_RUN_ID}"
+      echo "Controller Image: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${OCI_BUILD_RUN_ID}"
+
+outputArtifacts:
+  - name: frontend-deployment
+    type: BINARY
+    location: k8s/frontend-deployment.yaml
+
+  - name: bot-deployment
+    type: BINARY
+    location: k8s/bot-deployment.yaml
+
+  - name: controller-deployment
+    type: BINARY
+    location: k8s/controller-deployment.yaml
