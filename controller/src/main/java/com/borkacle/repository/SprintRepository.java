@@ -14,9 +14,10 @@ public interface SprintRepository extends JpaRepository<Sprint, Long> {
     Optional<Sprint> findFirstByOrderByFechaInicioDesc();
     List<Sprint> findByEstado(String estado);
 
-    @Query("SELECT s.id, s.nombre, s.fechaInicio, s.fechaFin, s.estado, t.id, t.titulo " +
+    @Query("SELECT s.id, s.nombre, s.fechaInicio, s.fechaFin, s.estado, t.id, t.titulo, e.nombre " +
            "FROM Sprint s " +
            "LEFT JOIN Tarea t ON t.sprint.id = s.id " +
+           "LEFT JOIN Estado e ON t.estado.id = e.id " +
            "ORDER BY s.fechaInicio DESC")
     List<Object[]> findAllSprintsWithTasks(); // Keep or remove based on needs
 } 

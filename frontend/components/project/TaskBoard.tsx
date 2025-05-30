@@ -9,7 +9,8 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent
+  DragEndEvent,
+  useDroppable
 } from "@dnd-kit/core"
 import { 
   arrayMove,
@@ -52,8 +53,7 @@ interface Columns {
   [key: string]: Column
 }
 
-// Mapeo de IDs de estado a nombres de columnas
-const columnTitles = {
+export const columnTitles = {
   todo: "Pendiente",
   inProgress: "En Proceso",
   review: "En Revisión",
@@ -62,8 +62,7 @@ const columnTitles = {
   cancelled: "Cancelado"
 }
 
-// Columnas por defecto en caso de error o para inicialización
-const defaultColumns: Columns = {
+export const defaultColumns: Columns = {
   todo: {
     id: "todo",
     title: "Pendiente",
@@ -119,36 +118,20 @@ export function TaskBoard() {
     try {
       setLoading(true)
       setError(null)
-      
       const response = await api.get('/api/tareas/board')
       const data = response.data
-      
+      let newColumns: Columns = { ...defaultColumns }
       if (data.columns) {
-        // Convertir el formato del backend al formato que espera el componente
-        const newColumns: Columns = {}
-        
-        // Inicializar las columnas con las predeterminadas
-        Object.keys(defaultColumns).forEach(columnKey => {
-          newColumns[columnKey] = {
-            id: columnKey,
-            title: columnTitles[columnKey as keyof typeof columnTitles],
-            tasks: []
-          }
-        })
-        
-        // Llenar con los datos del backend
         Object.entries(data.columns).forEach(([columnKey, tasks]) => {
           if (newColumns[columnKey]) {
             newColumns[columnKey].tasks = tasks as Task[]
           }
         })
-        
-        setColumns(newColumns)
       }
+      setColumns(newColumns)
     } catch (err) {
       console.error("Error al cargar las tareas:", err)
       setError("No se pudieron cargar las tareas. Por favor, intenta de nuevo más tarde.")
-      // Usar las columnas por defecto en caso de error
       setColumns(defaultColumns)
     } finally {
       setLoading(false)
@@ -243,25 +226,16 @@ export function TaskBoard() {
     
     // Actualizar el estado en el backend
     try {
-      // Extraer el ID de la tarea (quitar el prefijo 'ORA-')
-      const taskId = movedTask.id.replace('ORA-', '');
-      
+      // Extraer el ID numérico si tiene prefijo ORA-
+      const taskId = movedTask.id;
       // Obtener el ID de estado correspondiente al status del frontend
       const estadoId = getEstadoIdFromStatus(destinationColumnId);
-      
       // Llamar al endpoint para actualizar el estado
-      await api.put(`/api/tareas/${taskId}/estado`, {
-        estadoId: estadoId
-      });
-      
+      await api.put(`/api/tareas/${taskId}/estado`, { estadoId });
       console.log(`Tarea ${taskId} actualizada al estado ${estadoId} (${destinationColumnId})`);
     } catch (error) {
       console.error('Error al actualizar el estado de la tarea:', error);
-      // Opcionalmente: mostrar un mensaje de error al usuario
       setError("No se pudo actualizar el estado de la tarea. Los cambios podrían no guardarse.");
-      
-      // También podrías deshacer el cambio visual si falla la actualización en el backend
-      // setColumns(prevColumns);
     }
   }
   
@@ -383,22 +357,24 @@ export function TaskBoard() {
                     items={column.tasks.map((task: Task) => task.id)}
                     strategy={verticalListSortingStrategy}
                   >
-                    <div className="space-y-2 min-h-[200px]">
-                      {column.tasks.length === 0 ? (
-                        <div className="text-gray-400 text-center py-4">
-                          No hay tareas en esta columna
-                        </div>
-                      ) : (
-                        column.tasks.map((task: Task) => (
-                          <SortableTask 
-                            key={task.id} 
-                            task={task} 
-                            getPriorityIcon={getPriorityIcon}
-                            getTypeIcon={getTypeIcon}
-                          />
-                        ))
-                      )}
-                    </div>
+                    <DroppableColumn columnId={column.id}>
+                      <div className="space-y-2 min-h-[200px]">
+                        {column.tasks.length === 0 ? (
+                          <div className="text-gray-400 text-center py-4">
+                            No hay tareas en esta columna
+                          </div>
+                        ) : (
+                          column.tasks.map((task: Task) => (
+                            <SortableTask 
+                              key={task.id} 
+                              task={task} 
+                              getPriorityIcon={getPriorityIcon}
+                              getTypeIcon={getTypeIcon}
+                            />
+                          ))
+                        )}
+                      </div>
+                    </DroppableColumn>
                   </SortableContext>
                 </CardContent>
               </Card>
@@ -437,4 +413,9 @@ export function TaskBoard() {
       <CreateTaskDialog open={createTaskOpen} onOpenChange={setCreateTaskOpen} onCreateTask={handleCreateTask} />
     </div>
   )
+}
+
+function DroppableColumn({ columnId, children }: { columnId: string, children: React.ReactNode }) {
+  const { setNodeRef } = useDroppable({ id: columnId })
+  return <div ref={setNodeRef}>{children}</div>
 }

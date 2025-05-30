@@ -26,10 +26,12 @@ public class SprintController {
     public static class TaskSummaryDto {
         public Long id;
         public String titulo;
+        public String estado;
 
-        public TaskSummaryDto(Long id, String titulo) {
+        public TaskSummaryDto(Long id, String titulo, String estado) {
             this.id = id;
             this.titulo = titulo;
+            this.estado = estado;
         }
     }
 
@@ -79,7 +81,11 @@ public class SprintController {
         );
 
         // Add task summaries to DTO
-        tasks.forEach(task -> sprintDto.tasks.add(new TaskSummaryDto(task.getId(), task.getTitulo())));
+        tasks.forEach(task -> sprintDto.tasks.add(new TaskSummaryDto(
+            task.getId(), 
+            task.getTitulo(), 
+            task.getEstado() != null ? task.getEstado().getNombre() : null
+        )));
 
         return ResponseEntity.ok(sprintDto);
     }
@@ -94,12 +100,12 @@ public class SprintController {
         for (Object[] row : rawResults) {
             Long sprintId = (Long) row[0];
             String sprintNombre = (String) row[1];
-            // Assuming date types are returned correctly; adjust casting if necessary
             LocalDate sprintFechaInicio = (row[2] instanceof java.sql.Date) ? ((java.sql.Date)row[2]).toLocalDate() : (LocalDate) row[2];
             LocalDate sprintFechaFin = (row[3] instanceof java.sql.Date) ? ((java.sql.Date)row[3]).toLocalDate() : (LocalDate) row[3];
             String sprintEstado = (String) row[4];
             Long taskId = (Long) row[5];
             String taskTitulo = (String) row[6];
+            String taskEstado = (String) row[7];
 
             // Get or create Sprint DTO
             SprintWithTasksDto sprintDto = sprintMap.computeIfAbsent(sprintId, id ->
@@ -108,7 +114,7 @@ public class SprintController {
 
             // Add task summary if a task exists for this row
             if (taskId != null) {
-                sprintDto.tasks.add(new TaskSummaryDto(taskId, taskTitulo));
+                sprintDto.tasks.add(new TaskSummaryDto(taskId, taskTitulo, taskEstado));
             }
         }
 

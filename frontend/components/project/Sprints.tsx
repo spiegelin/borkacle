@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { CreateSprintDialog } from "@/components/ui/CreateSprintDialog"
-import { SprintDetail } from "@/components/project/SprintDetail"
+import { SprintBoard } from "@/components/project/SprintBoard"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import api from "@/lib/api"
 import { Badge } from "@/components/ui/badge"
@@ -46,19 +46,38 @@ export function Sprints() {
       const data = response.data
       
       // Transform the data to match our Sprint interface
-      const transformedSprints = data.map((sprint: any) => ({
-        id: sprint.id.toString(),
-        nombre: sprint.nombre,
-        estado: sprint.estado,
-        fechaInicio: sprint.fechaInicio,
-        fechaFin: sprint.fechaFin,
-        tasks: {
-          total: sprint.tasks?.length || 0,
-          completed: sprint.tasks?.filter((t: any) => t.status === "done").length || 0,
-          inProgress: sprint.tasks?.filter((t: any) => t.status === "inProgress").length || 0,
-          todo: sprint.tasks?.filter((t: any) => t.status === "todo").length || 0
+      const transformedSprints = data.map((sprint: any) => {
+        // Log the raw sprint data for debugging
+        console.log('Raw sprint data:', sprint)
+        
+        const tasks = sprint.tasks || []
+        const completedTasks = tasks.filter((t: any) => t.estado === 'Completado').length
+        const inProgressTasks = tasks.filter((t: any) => t.estado === 'En Proceso').length
+        const todoTasks = tasks.filter((t: any) => t.estado === 'Pendiente').length
+        
+        // Log the task counts for debugging
+        console.log(`Sprint ${sprint.id} task counts:`, {
+          total: tasks.length,
+          completed: completedTasks,
+          inProgress: inProgressTasks,
+          todo: todoTasks,
+          tasks: tasks.map((t: any) => ({ id: t.id, titulo: t.titulo, estado: t.estado }))
+        })
+        
+        return {
+          id: sprint.id.toString(),
+          nombre: sprint.nombre,
+          estado: sprint.estado,
+          fechaInicio: sprint.fechaInicio,
+          fechaFin: sprint.fechaFin,
+          tasks: {
+            total: tasks.length,
+            completed: completedTasks,
+            inProgress: inProgressTasks,
+            todo: todoTasks
+          }
         }
-      }))
+      })
       
       setSprints(transformedSprints)
     } catch (err) {
@@ -129,7 +148,7 @@ export function Sprints() {
       </div>
 
       {selectedSprint ? (
-        <SprintDetail
+        <SprintBoard
           sprintId={selectedSprint.id}
           onBack={() => setSelectedSprint(null)}
         />
@@ -148,20 +167,80 @@ export function Sprints() {
                 <CardHeader className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <CollapsibleTrigger
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          toggleSprint(sprint.id, e)
-                        }}
-                        className="p-1 hover:bg-gray-100 rounded"
-                      >
-                        {openSprints.includes(sprint.id) ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
-                        )}
-                      </CollapsibleTrigger>
+                      <Collapsible open={openSprints.includes(sprint.id)}>
+                        <CollapsibleTrigger
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            toggleSprint(sprint.id, e)
+                          }}
+                          className="p-1 hover:bg-gray-100 rounded"
+                        >
+                          {openSprints.includes(sprint.id) ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <CardContent 
+                            className="p-4 pt-0"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                            }}
+                          >
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-gray-500" />
+                                <div>
+                                  <p className="text-sm text-gray-500">Total Tasks</p>
+                                  <p className="font-medium">{sprint.tasks.total}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                                <div>
+                                  <p className="text-sm text-gray-500">Completed</p>
+                                  <p className="font-medium">{sprint.tasks.completed}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-orange-500" />
+                                <div>
+                                  <p className="text-sm text-gray-500">In Progress</p>
+                                  <p className="font-medium">{sprint.tasks.inProgress}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-gray-500" />
+                                <div>
+                                  <p className="text-sm text-gray-500">To Do</p>
+                                  <p className="font-medium">{sprint.tasks.todo}</p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="mt-4 space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span>Progress</span>
+                                <span>
+                                  {sprint.tasks.total > 0
+                                    ? Math.round((sprint.tasks.completed / sprint.tasks.total) * 100)
+                                    : 0}%
+                                </span>
+                              </div>
+                              <Progress
+                                value={
+                                  sprint.tasks.total > 0
+                                    ? (sprint.tasks.completed / sprint.tasks.total) * 100
+                                    : 0
+                                }
+                                className="h-2"
+                              />
+                            </div>
+                          </CardContent>
+                        </CollapsibleContent>
+                      </Collapsible>
                       <div 
                         className="flex-1 cursor-pointer" 
                         onClick={(e) => {
@@ -212,64 +291,6 @@ export function Sprints() {
                     </DropdownMenu>
                   </div>
                 </CardHeader>
-                <CollapsibleContent>
-                  <CardContent 
-                    className="p-4 pt-0"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                    }}
-                  >
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-gray-500" />
-                        <div>
-                          <p className="text-sm text-gray-500">Total Tasks</p>
-                          <p className="font-medium">{sprint.tasks.total}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        <div>
-                          <p className="text-sm text-gray-500">Completed</p>
-                          <p className="font-medium">{sprint.tasks.completed}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-orange-500" />
-                        <div>
-                          <p className="text-sm text-gray-500">In Progress</p>
-                          <p className="font-medium">{sprint.tasks.inProgress}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-gray-500" />
-                        <div>
-                          <p className="text-sm text-gray-500">To Do</p>
-                          <p className="font-medium">{sprint.tasks.todo}</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-4 space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Progress</span>
-                        <span>
-                          {sprint.tasks.total > 0
-                            ? Math.round((sprint.tasks.completed / sprint.tasks.total) * 100)
-                            : 0}%
-                        </span>
-                      </div>
-                      <Progress
-                        value={
-                          sprint.tasks.total > 0
-                            ? (sprint.tasks.completed / sprint.tasks.total) * 100
-                            : 0
-                        }
-                        className="h-2"
-                      />
-                    </div>
-                  </CardContent>
-                </CollapsibleContent>
               </Card>
             ))}
         </div>
