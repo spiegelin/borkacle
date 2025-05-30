@@ -12,7 +12,7 @@ export default function LandingPage() {
             <div className="h-10 w-10 rounded-md bg-[#C74634] flex items-center justify-center text-white font-bold text-xl">
               O
             </div>
-            <div className="font-semibold text-xl text-[#3A3A3A]">Oracle Cloud Tasks</div>
+            <div className="font-semibold text-xl text-[#3A3A3A]">Oracle Cloud Tasks ESTA MALLL NOOOO</div>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/login" passHref>
