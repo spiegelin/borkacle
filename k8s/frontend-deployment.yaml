@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ${FRONTEND_IMAGE}
+          image: mx-queretaro-1.ocir.io/axtwc9mqbq4b/borkacle-frontend:${VERSION}
           ports:
             - containerPort: 80
           envFrom:
