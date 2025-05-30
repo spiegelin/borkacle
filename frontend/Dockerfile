@@ -12,4 +12,4 @@ EXPOSE 80
 ENV NODE_ENV=production
 ENV PORT=80
 
-CMD ["sh", "-c", "npm run build && npm run start"] 
+CMD ["sh", "-c", "npm run build"] 
