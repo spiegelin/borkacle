@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: bot
-          image: <region>/<ns>/borkacle-bot:1.0.1
+          image: mx-queretaro-1.ocir.io/axtwc9mqbq4b/borkacle-bot:1.0.2
           ports:
             - containerPort: 8080
           envFrom:
