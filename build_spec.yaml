@@ -6,14 +6,12 @@ env:
   variables:
     REGION: mx-queretaro-1
     REGISTRY_NAMESPACE: axtwc9mqbq4b
-    IMAGE_TAG: "${BUILD_RUN_ID}"
 
 steps:
   - type: Command
     name: Login to OCIR
     command: |
-      echo "Logging in to OCIR with the following user:"
-      echo "${DEVOPS_USERNAME}"
+      echo "Logging in to OCIR..."
       docker login ${REGION}.ocir.io \
         --username "${DEVOPS_USERNAME}" \
         --password "${DEVOPS_AUTH_TOKEN}"
@@ -27,53 +25,55 @@ steps:
   - type: Command
     name: Build Frontend
     command: |
+      IMAGE_TAG=${OCI_BUILD_RUN_ID}
       docker build -t ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${IMAGE_TAG} ./frontend
 
   - type: Command
     name: Push Frontend
     command: |
+      IMAGE_TAG=${OCI_BUILD_RUN_ID}
       docker push ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${IMAGE_TAG}
 
   - type: Command
     name: Build Bot
     command: |
+      IMAGE_TAG=${OCI_BUILD_RUN_ID}
       docker build -t ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${IMAGE_TAG} ./bot
 
   - type: Command
     name: Push Bot
     command: |
+      IMAGE_TAG=${OCI_BUILD_RUN_ID}
       docker push ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${IMAGE_TAG}
 
   - type: Command
     name: Build Controller
     command: |
+      IMAGE_TAG=${OCI_BUILD_RUN_ID}
       docker build -t ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${IMAGE_TAG} ./controller
 
   - type: Command
     name: Push Controller
     command: |
+      IMAGE_TAG=${OCI_BUILD_RUN_ID}
       docker push ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${IMAGE_TAG}
 
   - type: Command
-    name: Reemplazar imágenes en YAMLs
+    name: Show Image Tags
     command: |
-      FRONTEND_IMAGE=${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${IMAGE_TAG}
-      BOT_IMAGE=${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${IMAGE_TAG}
-      CONTROLLER_IMAGE=${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${IMAGE_TAG}
-
-      sed "s|__FRONTEND_IMAGE__|$FRONTEND_IMAGE|g" k8s/frontend-deployment.yaml > k8s/frontend-deployment.generated.yaml
-      sed "s|__BOT_IMAGE__|$BOT_IMAGE|g" k8s/bot-deployment.yaml > k8s/bot-deployment.generated.yaml
-      sed "s|__CONTROLLER_IMAGE__|$CONTROLLER_IMAGE|g" k8s/controller-deployment.yaml > k8s/controller-deployment.generated.yaml
+      echo "Frontend Image: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${OCI_BUILD_RUN_ID}"
+      echo "Bot Image: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${OCI_BUILD_RUN_ID}"
+      echo "Controller Image: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${OCI_BUILD_RUN_ID}"
 
 outputArtifacts:
   - name: frontend-deployment
     type: BINARY
-    location: k8s/frontend-deployment.generated.yaml
+    location: k8s/frontend-deployment.yaml
 
   - name: bot-deployment
     type: BINARY
-    location: k8s/bot-deployment.generated.yaml
+    location: k8s/bot-deployment.yaml
 
   - name: controller-deployment
     type: BINARY
-    location: k8s/controller-deployment.generated.yaml
+    location: k8s/controller-deployment.yaml
