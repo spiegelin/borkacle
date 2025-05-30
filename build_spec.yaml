@@ -11,9 +11,6 @@ env:
     BOT_REPO: borkacle-bot
     CONTROLLER_REPO: borkacle-controller
 
-exportedVariables:
-  - BUILDRUN_HASH
-
 steps:
   - type: Command
     name: Login to OCIR
@@ -29,11 +26,18 @@ steps:
     timeoutInSeconds: 40
     command: |
       export BUILDRUN_HASH=$(echo ${OCI_BUILD_RUN_ID} | rev | cut -c 1-7)
-      echo "BUILDRUN_HASH: $BUILDRUN_HASH"
+      echo "BUILDRUN_HASH=$BUILDRUN_HASH" > build_vars.env
+
+  - type: Command
+    name: Load Image Tag
+    command: |
+      source build_vars.env
+      echo "Loaded BUILDRUN_HASH=$BUILDRUN_HASH"
 
   - type: Command
     name: Build & Push Frontend
     command: |
+      source build_vars.env
       docker build --pull --no-cache \
         -t ${REGISTRY}/${NAMESPACE}/${FRONTEND_REPO}:${BUILDRUN_HASH} \
         ./frontend
@@ -43,6 +47,7 @@ steps:
   - type: Command
     name: Build & Push Bot
     command: |
+      source build_vars.env
       docker build --pull --no-cache \
         -t ${REGISTRY}/${NAMESPACE}/${BOT_REPO}:${BUILDRUN_HASH} \
         ./bot
@@ -52,6 +57,7 @@ steps:
   - type: Command
     name: Build & Push Controller
     command: |
+      source build_vars.env
       docker build --pull --no-cache \
         -t ${REGISTRY}/${NAMESPACE}/${CONTROLLER_REPO}:${BUILDRUN_HASH} \
         ./controller
@@ -61,6 +67,7 @@ steps:
   - type: Command
     name: Show Image URIs
     command: |
+      source build_vars.env
       echo "FRONTEND_IMAGE=${REGISTRY}/${NAMESPACE}/${FRONTEND_REPO}:${BUILDRUN_HASH}"
       echo "BOT_IMAGE=${REGISTRY}/${NAMESPACE}/${BOT_REPO}:${BUILDRUN_HASH}"
       echo "CONTROLLER_IMAGE=${REGISTRY}/${NAMESPACE}/${CONTROLLER_REPO}:${BUILDRUN_HASH}"
