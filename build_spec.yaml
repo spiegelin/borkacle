@@ -35,33 +35,45 @@ steps:
       echo "Loaded BUILDRUN_HASH=$BUILDRUN_HASH"
 
   - type: Command
-    name: Build & Push Frontend
+    name: Build Frontend  
     command: |
       source build_vars.env
       docker build --pull --no-cache \
         -t ${REGISTRY}/${NAMESPACE}/${FRONTEND_REPO}:${BUILDRUN_HASH} \
         ./frontend
 
+  - type: Command
+    name: Push Frontend
+    command: |
+      source build_vars.env
       docker push ${REGISTRY}/${NAMESPACE}/${FRONTEND_REPO}:${BUILDRUN_HASH}
 
   - type: Command
-    name: Build & Push Bot
+    name: Build Bot
     command: |
       source build_vars.env
       docker build --pull --no-cache \
         -t ${REGISTRY}/${NAMESPACE}/${BOT_REPO}:${BUILDRUN_HASH} \
         ./bot
 
+  - type: Command
+    name: Push Bot
+    command: |
+      source build_vars.env
       docker push ${REGISTRY}/${NAMESPACE}/${BOT_REPO}:${BUILDRUN_HASH}
 
   - type: Command
-    name: Build & Push Controller
+    name: Build Controller
     command: |
       source build_vars.env
       docker build --pull --no-cache \
         -t ${REGISTRY}/${NAMESPACE}/${CONTROLLER_REPO}:${BUILDRUN_HASH} \
         ./controller
 
+  - type: Command
+    name: Push Controller
+    command: |
+      source build_vars.env
       docker push ${REGISTRY}/${NAMESPACE}/${CONTROLLER_REPO}:${BUILDRUN_HASH}
 
   - type: Command
