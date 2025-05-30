@@ -20,6 +20,12 @@ steps:
         --password "${DEVOPS_AUTH_TOKEN}"
 
   - type: Command
+  name: DockerHub Login
+  command: |
+    echo "Logeando a DockerHub..."
+    echo "${DOCKERHUB_PASSWORD}" | docker login --username "${DOCKERHUB_USERNAME}" --password-stdin
+
+  - type: Command
     name: Build Frontend
     command: |
       docker build -t ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${IMAGE_TAG} ./frontend
@@ -31,15 +37,23 @@ steps:
 
 
   - type: Command
-    name: Build and Push Bot
+    name: Build 
     command: |
       docker build -t ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${IMAGE_TAG} ./bot
+
+  - type: Command
+    name: Push Bot
+    command: |
       docker push ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${IMAGE_TAG}
 
   - type: Command
-    name: Build and Push Controller
+    name: Build Controller
     command: |
       docker build -t ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${IMAGE_TAG} ./controller
+
+  - type: Command
+    name: Push Controller
+    command: |
       docker push ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${IMAGE_TAG}
 
 outputArtifacts:
