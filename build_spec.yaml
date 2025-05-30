@@ -14,7 +14,6 @@ steps:
     command: |
       echo "Logging in to OCIR with the following user:"
       echo "${DEVOPS_USERNAME}"
-      echo "Running docker login command..."
       docker login ${REGION}.ocir.io \
         --username "${DEVOPS_USERNAME}" \
         --password "${DEVOPS_AUTH_TOKEN}"
@@ -22,7 +21,7 @@ steps:
   - type: Command
     name: DockerHub Login
     command: |
-      echo "Logeando a DockerHub..."
+      echo "Logging in to DockerHub..."
       echo "${DOCKERHUB_PASSWORD}" | docker login --username "${DOCKERHUB_USERNAME}" --password-stdin
 
   - type: Command
@@ -55,24 +54,26 @@ steps:
     command: |
       docker push ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${IMAGE_TAG}
 
+  - type: Command
+    name: Reemplazar imágenes en YAMLs
+    command: |
+      FRONTEND_IMAGE=${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${IMAGE_TAG}
+      BOT_IMAGE=${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${IMAGE_TAG}
+      CONTROLLER_IMAGE=${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${IMAGE_TAG}
+
+      sed "s|__FRONTEND_IMAGE__|$FRONTEND_IMAGE|g" k8s/frontend-deployment.yaml > k8s/frontend-deployment.generated.yaml
+      sed "s|__BOT_IMAGE__|$BOT_IMAGE|g" k8s/bot-deployment.yaml > k8s/bot-deployment.generated.yaml
+      sed "s|__CONTROLLER_IMAGE__|$CONTROLLER_IMAGE|g" k8s/controller-deployment.yaml > k8s/controller-deployment.generated.yaml
+
 outputArtifacts:
   - name: frontend-deployment
     type: BINARY
-    location: k8s/frontend-deployment.yaml
+    location: k8s/frontend-deployment.generated.yaml
 
   - name: bot-deployment
     type: BINARY
-    location: k8s/bot-deployment.yaml
+    location: k8s/bot-deployment.generated.yaml
 
   - name: controller-deployment
     type: BINARY
-    location: k8s/controller-deployment.yaml
-
-exportedVariables:
-  - name: FRONTEND_IMAGE
-    value: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${IMAGE_TAG}
-  - name: BOT_IMAGE
-    value: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${IMAGE_TAG}
-  - name: CONTROLLER_IMAGE
-    value: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${IMAGE_TAG}
-
+    location: k8s/controller-deployment.generated.yaml
