@@ -22,6 +22,12 @@ steps:
             --password-stdin
 
   - type: Command
+    name: Login to DockerHub
+    command: |
+      echo "🔑 Autenticando en DockerHub..."
+      echo "${DOCKERHUB_PASSWORD}" | docker login --username "${DOCKERHUB_USERNAME}" --password-stdin
+
+  - type: Command
     name: Define unique image tag
     timeoutInSeconds: 40
     command: |
