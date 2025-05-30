@@ -6,7 +6,7 @@ env:
   variables:
     REGION: mx-queretaro-1
     REGISTRY_NAMESPACE: axtwc9mqbq4b
-    IMAGE_TAG: "1.0.3"
+    IMAGE_TAG: "${BUILD_RUN_ID}"
 
 steps:
   - type: Command
@@ -67,3 +67,12 @@ outputArtifacts:
   - name: controller-deployment
     type: BINARY
     location: k8s/controller-deployment.yaml
+
+exportedVariables:
+  - name: FRONTEND_IMAGE
+    value: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${IMAGE_TAG}
+  - name: BOT_IMAGE
+    value: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${IMAGE_TAG}
+  - name: CONTROLLER_IMAGE
+    value: ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${IMAGE_TAG}
+
