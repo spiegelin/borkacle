@@ -21,11 +21,22 @@ import { format } from "date-fns"
 interface CreateSprintDialogProps {
   open: boolean
   setOpen: (open: boolean) => void
+  onCreateSprint: (sprint: { name: string; startDate: Date; endDate: Date }) => void
 }
 
-export function CreateSprintDialog({ open, setOpen }: CreateSprintDialogProps) {
+export function CreateSprintDialog({ open, setOpen, onCreateSprint }: CreateSprintDialogProps) {
   const [startDate, setStartDate] = useState<Date>()
   const [endDate, setEndDate] = useState<Date>()
+  const [name, setName] = useState("")
+
+  const handleCreate = () => {
+    if (name && startDate && endDate) {
+      onCreateSprint({ name, startDate, endDate })
+      setName("")
+      setStartDate(undefined)
+      setEndDate(undefined)
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -39,7 +50,13 @@ export function CreateSprintDialog({ open, setOpen }: CreateSprintDialogProps) {
             <Label htmlFor="sprint-name" className="text-right">
               Sprint Name
             </Label>
-            <Input id="sprint-name" placeholder="Sprint 4" className="col-span-3" />
+            <Input 
+              id="sprint-name" 
+              placeholder="Sprint 4" 
+              className="col-span-3"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="start-date" className="text-right">
@@ -88,7 +105,11 @@ export function CreateSprintDialog({ open, setOpen }: CreateSprintDialogProps) {
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          <Button onClick={() => setOpen(false)} className="bg-[#C74634] hover:bg-[#b03d2e]">
+          <Button 
+            onClick={handleCreate} 
+            className="bg-[#C74634] hover:bg-[#b03d2e]"
+            disabled={!name || !startDate || !endDate}
+          >
             Create Sprint
           </Button>
         </DialogFooter>

@@ -140,18 +140,28 @@ public class TareaService {
     @Transactional
     public Tarea updateTask(Long tareaId, String titulo, String descripcion, Double tiempoEstimado,
                           Long estadoId, Long prioridadId, Long proyectoId, Long sprintId,
-                          Double tiempoReal) {
-        logger.info("Updating task: ID={}", tareaId);
+                          Double tiempoReal, String tipo) {
+        logger.info("Updating task: ID={}, titulo={}, descripcion={}, tipo={}", tareaId, titulo, descripcion, tipo);
         try {
             Tarea tarea = tareaRepository.findById(tareaId)
                     .orElseThrow(() -> new RuntimeException("Task not found with id: " + tareaId));
 
             // Update fields if provided
-            if (titulo != null) tarea.setTitulo(titulo);
-            if (descripcion != null) tarea.setDescripcion(descripcion);
+            if (titulo != null) {
+                tarea.setTitulo(titulo);
+                logger.info("Updated titulo: {}", titulo);
+            }
+            // Always update description, even if null
+            tarea.setDescripcion(descripcion);
+            logger.info("Updated descripcion: {}", descripcion);
+            
             if (tiempoEstimado != null) tarea.setTiempoEstimado(tiempoEstimado);
             if (proyectoId != null) tarea.setProyectoId(proyectoId);
             if (tiempoReal != null) tarea.setTiempoReal(tiempoReal);
+            if (tipo != null) {
+                tarea.setTipo(tipo);
+                logger.info("Updated tipo: {}", tipo);
+            }
 
             if (estadoId != null) {
                 try {
@@ -204,4 +214,16 @@ public class TareaService {
     }
 
     // Consider adding methods to find tasks by other criteria if needed for API endpoints
+
+    @Transactional
+    public Tarea save(Tarea tarea) {
+        logger.info("Saving task: ID={}", tarea.getId());
+        try {
+            tarea.setFechaActualizacion(OffsetDateTime.now());
+            return tareaRepository.save(tarea);
+        } catch (Exception e) {
+            logger.error("Error saving task: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
 } 

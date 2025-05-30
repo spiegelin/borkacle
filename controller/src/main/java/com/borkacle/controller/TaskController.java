@@ -2,6 +2,8 @@ package com.borkacle.controller;
 
 import com.borkacle.model.Tarea;
 import com.borkacle.service.TareaService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/tasks") // Base path for task-related endpoints
 public class TaskController {
+
+    private static final Logger logger = LoggerFactory.getLogger(TaskController.class);
 
     @Autowired
     private TareaService tareaService;
@@ -39,6 +43,8 @@ public class TaskController {
         public Long proyectoId; // Optional
         public Long sprintId; // Optional
         public Double tiempoReal; // Optional
+        public String tipo; // Optional
+        public Long userId; // Optional - for user assignment
     }
 
     // New DTO for simplified task list response
@@ -116,13 +122,28 @@ public class TaskController {
     // --- Assign User --- //
     // Expecting a request body like: {"userId": 123}
     @PutMapping("/{taskId}/assignUser")
-    public ResponseEntity<Tarea> assignUserToTask(@PathVariable Long taskId, @RequestBody Map<String, Long> payload) {
-        Long usuarioId = payload.get("userId");
-        if (usuarioId == null) {
-             return ResponseEntity.badRequest().body(null); // Or provide error details
+    public ResponseEntity<?> assignUserToTask(@PathVariable Long taskId, @RequestBody Map<String, Long> payload) {
+        try {
+            logger.info("Received user assignment request for task {}: {}", taskId, payload);
+            Long usuarioId = payload.get("userId");
+            if (usuarioId == null) {
+                logger.error("No userId provided in request");
+                return ResponseEntity.badRequest().body(Map.of("error", "userId is required"));
+            }
+            
+            Tarea tareaActualizada = tareaService.assignUser(taskId, usuarioId);
+            if (tareaActualizada == null) {
+                logger.error("Task not found with id: {}", taskId);
+                return ResponseEntity.notFound().build();
+            }
+            
+            logger.info("Successfully assigned user {} to task {}", usuarioId, taskId);
+            return ResponseEntity.ok(new TaskDetailDto(tareaActualizada));
+        } catch (Exception e) {
+            logger.error("Error assigning user to task {}: {}", taskId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Error assigning user: " + e.getMessage()));
         }
-        Tarea tareaActualizada = tareaService.assignUser(taskId, usuarioId);
-        return ResponseEntity.ok(tareaActualizada);
     }
 
     // --- Assign Sprint --- //
@@ -151,19 +172,46 @@ public class TaskController {
 
     // --- Edit Task --- //
     @PutMapping("/{taskId}")
-    public ResponseEntity<Tarea> editTask(@PathVariable Long taskId, @RequestBody EditTaskRequest request) {
-        Tarea tareaActualizada = tareaService.updateTask(
-            taskId,
-            request.titulo,
-            request.descripcion,
-            request.tiempoEstimado,
-            request.estadoId,
-            request.prioridadId,
-            request.proyectoId,
-            request.sprintId,
-            request.tiempoReal
-        );
-        return ResponseEntity.ok(tareaActualizada);
+    public ResponseEntity<?> editTask(@PathVariable Long taskId, @RequestBody EditTaskRequest request) {
+        try {
+            logger.info("Received edit request for task {}: {}", taskId, request);
+            
+            // First update the task with the provided fields
+            Tarea tareaActualizada = tareaService.updateTask(
+                taskId,
+                request.titulo,
+                request.descripcion,
+                request.tiempoEstimado,
+                request.estadoId,
+                request.prioridadId,
+                request.proyectoId,
+                request.sprintId,
+                request.tiempoReal,
+                request.tipo
+            );
+            
+            if (tareaActualizada == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            // If userId is provided, assign the user
+            if (request.userId != null) {
+                logger.info("Assigning user {} to task {}", request.userId, taskId);
+                tareaActualizada = tareaService.assignUser(taskId, request.userId);
+                if (tareaActualizada == null) {
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(Map.of("error", "Failed to assign user to task"));
+                }
+            }
+
+            // Save the task to ensure all changes are persisted
+            tareaActualizada = tareaService.save(tareaActualizada);
+            return ResponseEntity.ok(new TaskDetailDto(tareaActualizada));
+        } catch (Exception e) {
+            logger.error("Error updating task {}: {}", taskId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Error updating task: " + e.getMessage()));
+        }
     }
 
     // --- Get Task by ID (Updated to return detailed DTO) --- //
@@ -194,7 +242,7 @@ public class TaskController {
         }
         // Use existing updateTask service method, passing null for fields not being changed
         try {
-            Tarea tareaActualizada = tareaService.updateTask(taskId, null, null, null, estadoId, null, null, null, null);
+            Tarea tareaActualizada = tareaService.updateTask(taskId, null, null, null, estadoId, null, null, null, null, null);
             return ResponseEntity.ok(new TaskDetailDto(tareaActualizada)); // Return updated task details
         } catch (RuntimeException e) {
             // Handle specific exceptions (like TaskNotFound, EstadoNotFound) potentially with ControllerAdvice

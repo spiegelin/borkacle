@@ -56,7 +56,8 @@ public class TareaController {
                 List<Map<String, Object>> tareasMapeadas = tareasEstado.stream()
                     .map(tarea -> {
                         Map<String, Object> tareaMap = new HashMap<>();
-                        tareaMap.put("id", "ORA-" + tarea.getId());
+                        tareaMap.put("id", tarea.getId());
+                        tareaMap.put("codigo", "ORA-" + tarea.getId());
                         tareaMap.put("title", tarea.getTitulo());
                         tareaMap.put("type", tarea.getTipo() != null ? tarea.getTipo().toLowerCase() : "task");
                         

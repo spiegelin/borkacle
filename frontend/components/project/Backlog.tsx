@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Plus, Search, Filter, ArrowUpDown, MoreHorizontal, AlertCircle, CheckCircle2, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,6 +9,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { CreateTaskDialog } from "@/components/ui/CreateTaskDialog"
 import { useRouter } from "next/navigation"
+import api from "@/lib/api"
+import { SprintDetail } from "@/components/project/SprintDetail"
+import { TaskDetail } from "@/components/project/TaskDetail"
 
 interface Task {
   id: string
@@ -28,108 +31,168 @@ interface Task {
 
 export function Backlog() {
   const [createTaskOpen, setCreateTaskOpen] = useState(false)
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: "ORA-2345",
-      title: "Setup cloud infrastructure",
-      type: "task",
-      priority: "high",
-      status: "todo",
-      created: "2023-02-10",
-      updated: "2023-02-15",
-    },
-    {
-      id: "ORA-2346",
-      title: "Database migration plan",
-      type: "story",
-      priority: "highest",
-      status: "todo",
-      assignee: { name: "John Doe", initials: "JD" },
-      created: "2023-02-08",
-      updated: "2023-02-14",
-    },
-    {
-      id: "ORA-2347",
-      title: "Login page not responsive",
-      type: "bug",
-      priority: "medium",
-      status: "todo",
-      created: "2023-02-12",
-      updated: "2023-02-12",
-    },
-    {
-      id: "ORA-2348",
-      title: "Implement SSO authentication",
-      type: "task",
-      priority: "high",
-      status: "inProgress",
-      assignee: { name: "Sarah Lee", initials: "SL" },
-      created: "2023-02-05",
-      updated: "2023-02-16",
-    },
-    {
-      id: "ORA-2349",
-      title: "Create API documentation",
-      type: "story",
-      priority: "medium",
-      status: "inProgress",
-      assignee: { name: "John Doe", initials: "JD" },
-      created: "2023-02-07",
-      updated: "2023-02-15",
-    },
-    {
-      id: "ORA-2350",
-      title: "Code review for security module",
-      type: "task",
-      priority: "highest",
-      status: "review",
-      created: "2023-02-01",
-      updated: "2023-02-14",
-    },
-    {
-      id: "ORA-2351",
-      title: "Performance testing results",
-      type: "story",
-      priority: "high",
-      status: "review",
-      assignee: { name: "Mike Chen", initials: "MC" },
-      created: "2023-01-28",
-      updated: "2023-02-13",
-    },
-    {
-      id: "ORA-2352",
-      title: "Initial project setup",
-      type: "task",
-      priority: "medium",
-      status: "done",
-      assignee: { name: "John Doe", initials: "JD" },
-      created: "2023-01-15",
-      updated: "2023-01-20",
-    },
-    {
-      id: "ORA-2353",
-      title: "Requirements gathering",
-      type: "story",
-      priority: "high",
-      status: "done",
-      created: "2023-01-10",
-      updated: "2023-01-18",
-    },
-  ])
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const [selectedSprintId, setSelectedSprintId] = useState<string | null>(null)
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [shouldRefresh, setShouldRefresh] = useState(false)
 
-  const handleRowClick = (taskId: string) => {
-    router.push(`/item/${taskId}`)
+  useEffect(() => {
+    fetchTasks()
+  }, [])
+
+  useEffect(() => {
+    if (shouldRefresh) {
+      fetchTasks()
+      setShouldRefresh(false)
+    }
+  }, [shouldRefresh])
+
+  const formatDate = (dateString: string | null | undefined): string => {
+    if (!dateString) {
+      return new Date().toISOString().split('T')[0]
+    }
+    try {
+      return new Date(dateString).toISOString().split('T')[0]
+    } catch (err) {
+      console.warn('Invalid date format:', dateString)
+      return new Date().toISOString().split('T')[0]
+    }
   }
 
-  const handleCreateTask = (newTask: Task) => {
-    // Add created and updated dates to the new task
-    const taskWithDates = {
-      ...newTask,
-      created: new Date().toISOString().split('T')[0],
-      updated: new Date().toISOString().split('T')[0]
+  const fetchTasks = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await api.get('/api/tareas/board')
+      const data = response.data
+      
+      // The API returns a map of columns with tasks
+      // We need to flatten all tasks into a single array
+      const allTasks: Task[] = []
+      
+      // Iterate through each column in the response
+      Object.entries(data.columns || {}).forEach(([columnKey, columnTasks]: [string, any]) => {
+        if (Array.isArray(columnTasks)) {
+          columnTasks.forEach((task: any) => {
+            // Fetch detailed task data for each task
+            api.get(`/api/tasks/${task.id}`).then(detailResponse => {
+              const taskDetail = detailResponse.data;
+              allTasks.push({
+                id: task.id || '',
+                title: task.title || '',
+                type: (task.type?.toLowerCase() || 'task') as Task['type'],
+                priority: task.priority || 'medium',
+                status: columnKey as Task['status'],
+                description: taskDetail.descripcion || '',
+                assignee: task.assignee ? {
+                  name: task.assignee.name || '',
+                  initials: getInitials(task.assignee.name || '')
+                } : undefined,
+                created: formatDate(task.created),
+                updated: formatDate(task.updated || task.created)
+              });
+              setTasks([...allTasks]);
+            }).catch(err => {
+              console.error(`Error fetching details for task ${task.id}:`, err);
+            });
+          });
+        }
+      });
+    } catch (err) {
+      console.error("Error fetching tasks:", err)
+      setError("Failed to load tasks. Please try again later.")
+    } finally {
+      setLoading(false)
     }
-    setTasks([taskWithDates, ...tasks])
+  }
+
+  const mapPriority = (priorityId: number): Task["priority"] => {
+    // Map your priority IDs to the corresponding priority levels
+    switch (priorityId) {
+      case 1: return "highest"
+      case 2: return "high"
+      case 3: return "medium"
+      case 4: return "low"
+      case 5: return "lowest"
+      default: return "medium"
+    }
+  }
+
+  const mapStatus = (statusId: number): Task["status"] => {
+    // Map your status IDs to the corresponding status values
+    switch (statusId) {
+      case 1: return "todo"
+      case 2: return "inProgress"
+      case 3: return "review"
+      case 4: return "done"
+      default: return "todo"
+    }
+  }
+
+  const getInitials = (name: string): string => {
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+  }
+
+  const handleRowClick = (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId)
+    if (task) setSelectedTask(task)
+  }
+
+  const handleCreateTask = async (newTask: Task) => {
+    try {
+      // Transform the task to match your API's expected format
+      const taskData = {
+        titulo: newTask.title,
+        descripcion: newTask.description,
+        tipo: newTask.type.toUpperCase(),
+        prioridadId: getPriorityId(newTask.priority),
+        estadoId: getStatusId(newTask.status),
+        // Add other required fields based on your API
+      }
+
+      const response = await api.post('/api/tareas', taskData)
+      
+      // Add the created task to the list
+      const createdTask = {
+        ...newTask,
+        id: response.data.id.toString(),
+        created: new Date().toISOString().split('T')[0],
+        updated: new Date().toISOString().split('T')[0]
+      }
+      
+      setTasks([createdTask, ...tasks])
+    } catch (err) {
+      console.error("Error creating task:", err)
+      setError("Failed to create task. Please try again.")
+    }
+  }
+
+  const getPriorityId = (priority: Task["priority"]): number => {
+    switch (priority) {
+      case "highest": return 1
+      case "high": return 2
+      case "medium": return 3
+      case "low": return 4
+      case "lowest": return 5
+      default: return 3
+    }
+  }
+
+  const getStatusId = (status: Task["status"]): number => {
+    switch (status) {
+      case "todo": return 1
+      case "inProgress": return 2
+      case "review": return 3
+      case "done": return 4
+      default: return 1
+    }
   }
 
   const getTypeIcon = (type: Task["type"]) => {
@@ -188,6 +251,55 @@ export function Backlog() {
       case "done":
         return "bg-green-100 text-green-700"
     }
+  }
+
+  const handleBackFromTaskDetail = () => {
+    setSelectedTask(null)
+    setShouldRefresh(true)
+  }
+
+  if (selectedTask) {
+    return (
+      <TaskDetail
+        task={selectedTask}
+        onBack={handleBackFromTaskDetail}
+      />
+    )
+  }
+
+  if (selectedSprintId) {
+    return (
+      <SprintDetail
+        sprintId={selectedSprintId}
+        onBack={() => setSelectedSprintId(null)}
+      />
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-[#3A3A3A]">Backlog</h1>
+            <p className="text-gray-500">Loading tasks...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-[#3A3A3A]">Backlog</h1>
+            <p className="text-red-500">{error}</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

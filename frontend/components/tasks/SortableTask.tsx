@@ -47,49 +47,29 @@ export function SortableTask({ task, getPriorityIcon, getTypeIcon }: SortableTas
       {...listeners}
       className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-100"
     >
-      <Link href={`/item/${task.id}`} className="block">
-        <div className="flex items-start gap-3">
-          <div className="flex items-center gap-2">
-            {getTypeIcon(task.type)}
-            {getPriorityIcon(task.priority)}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{task.id}</span>
-            </div>
-            <p className="text-sm font-medium text-[#3A3A3A] mb-2">{task.title}</p>
-            {task.assignee && (
-              <div className="flex items-center gap-1 mt-2">
-                <Avatar className="h-5 w-5">
-                  {task.assignee.avatar && (
-                    <AvatarImage src={task.assignee.avatar} alt={task.assignee.name} />
-                  )}
-                  <AvatarFallback>{task.assignee.initials}</AvatarFallback>
-                </Avatar>
-                <span className="text-xs text-gray-500">{task.assignee.name}</span>
-              </div>
-            )}
-          </div>
-          <Button variant="ghost" size="icon" className="h-6 w-6 opacity-50 hover:opacity-100">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="lucide lucide-more-horizontal"
-            >
-              <circle cx="12" cy="12" r="1" />
-              <circle cx="19" cy="12" r="1" />
-              <circle cx="5" cy="12" r="1" />
-            </svg>
-          </Button>
+      <div className="flex items-start gap-3">
+        <div className="flex items-center gap-2">
+          {getTypeIcon(task.type)}
+          {getPriorityIcon(task.priority)}
         </div>
-      </Link>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{task.id}</span>
+          </div>
+          <p className="text-sm font-medium text-[#3A3A3A] mb-2">{task.title}</p>
+          {task.assignee && (
+            <div className="flex items-center gap-1 mt-2">
+              <Avatar className="h-5 w-5">
+                {task.assignee.avatar && (
+                  <AvatarImage src={task.assignee.avatar} alt={task.assignee.name} />
+                )}
+                <AvatarFallback>{task.assignee.initials}</AvatarFallback>
+              </Avatar>
+              <span className="text-xs text-gray-500">{task.assignee.name}</span>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 } 
