@@ -12,10 +12,12 @@ steps:
   - type: Command
     name: Login to OCIR
     command: |
-      echo "Logging in to OCIR..."
+      echo "Logging in to OCIR with the following user:"
+      echo "${DEVOPS_USERNAME}"
+      echo "Running docker login command..."
       docker login ${REGION}.ocir.io \
-        --username '${DEVOPS_USERNAME}' \
-        --password '${DEVOPS_AUTH_TOKEN}'
+        --username "${DEVOPS_USERNAME}" \
+        --password "${DEVOPS_AUTH_TOKEN}"
 
   - type: Command
     name: Build and Push Frontend
