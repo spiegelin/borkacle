@@ -5,7 +5,7 @@ shell: bash
 env:
   variables:
     REGION: mx-queretaro-1
-    OCIR_NAMESPACE: axtwc9mqbq4b
+    REGISTRY_NAMESPACE: axtwc9mqbq4b
     IMAGE_TAG: "1.0.3"
 
 steps:
@@ -13,28 +13,25 @@ steps:
     name: Login to OCIR
     command: |
       echo "Logging in to OCIR..."
-      docker login ${REGION}.ocir.io -u '${OCI_USERNAME}' -p '${OCI_AUTH_TOKEN}'
+      docker login ${REGION}.ocir.io -u '${DEVOPS_USERNAME}' -p '${DEVOPS_AUTH_TOKEN}'
 
   - type: Command
     name: Build and Push Frontend
     command: |
-      echo "Building frontend image..."
-      docker build -t ${REGION}.ocir.io/${OCIR_NAMESPACE}/borkacle-frontend:${IMAGE_TAG} ./frontend
-      docker push ${REGION}.ocir.io/${OCIR_NAMESPACE}/borkacle-frontend:${IMAGE_TAG}
+      docker build -t ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${IMAGE_TAG} ./frontend
+      docker push ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-frontend:${IMAGE_TAG}
 
   - type: Command
     name: Build and Push Bot
     command: |
-      echo "Building bot image..."
-      docker build -t ${REGION}.ocir.io/${OCIR_NAMESPACE}/borkacle-bot:${IMAGE_TAG} ./bot
-      docker push ${REGION}.ocir.io/${OCIR_NAMESPACE}/borkacle-bot:${IMAGE_TAG}
+      docker build -t ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${IMAGE_TAG} ./bot
+      docker push ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-bot:${IMAGE_TAG}
 
   - type: Command
     name: Build and Push Controller
     command: |
-      echo "Building controller image..."
-      docker build -t ${REGION}.ocir.io/${OCIR_NAMESPACE}/borkacle-controller:${IMAGE_TAG} ./controller
-      docker push ${REGION}.ocir.io/${OCIR_NAMESPACE}/borkacle-controller:${IMAGE_TAG}
+      docker build -t ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${IMAGE_TAG} ./controller
+      docker push ${REGION}.ocir.io/${REGISTRY_NAMESPACE}/borkacle-controller:${IMAGE_TAG}
 
 outputArtifacts:
   - name: frontend-deployment
