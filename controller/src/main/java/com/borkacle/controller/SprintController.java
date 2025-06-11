@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/sprints") // Base path for sprint-related endpoints
@@ -64,30 +65,94 @@ public class SprintController {
 
     // --- Show Sprint by ID (Updated) --- //
     @GetMapping("/{sprintId}")
-    public ResponseEntity<SprintWithTasksDto> showSprint(@PathVariable Long sprintId) {
+    public ResponseEntity<Map<String, Object>> showSprint(@PathVariable Long sprintId) {
         // Fetch the sprint details
-        Sprint sprint = sprintService.showSprintDetails(sprintId); // Throws exception if not found
+        Sprint sprint = sprintService.showSprintDetails(sprintId);
 
         // Fetch associated tasks
         List<Tarea> tasks = sprintService.findTasksBySprintId(sprintId);
 
-        // Create DTO
-        SprintWithTasksDto sprintDto = new SprintWithTasksDto(
-            sprint.getId(),
-            sprint.getNombre(),
-            sprint.getFechaInicio(),
-            sprint.getFechaFin(),
-            sprint.getEstado()
-        );
+        // Organizar las tareas por estado
+        Map<String, List<Map<String, Object>>> columns = new LinkedHashMap<>();
+        columns.put("todo", new ArrayList<>());
+        columns.put("inProgress", new ArrayList<>());
+        columns.put("review", new ArrayList<>());
+        columns.put("blocked", new ArrayList<>());
+        columns.put("done", new ArrayList<>());
+        columns.put("cancelled", new ArrayList<>());
 
-        // Add task summaries to DTO
-        tasks.forEach(task -> sprintDto.tasks.add(new TaskSummaryDto(
-            task.getId(), 
-            task.getTitulo(), 
-            task.getEstado() != null ? task.getEstado().getNombre() : null
-        )));
+        // Mapear las tareas a sus columnas correspondientes
+        for (Tarea task : tasks) {
+            Map<String, Object> taskMap = new LinkedHashMap<>();
+            taskMap.put("id", task.getId());
+            taskMap.put("title", task.getTitulo());
+            taskMap.put("type", task.getTipo() != null ? task.getTipo().toLowerCase() : "task");
+            taskMap.put("priority", mapPriority(task.getPrioridad() != null ? task.getPrioridad().getId() : null));
+            taskMap.put("description", task.getDescripcion());
+            
+            // Mapear el asignado si existe
+            if (task.getAsignadoA() != null) {
+                Map<String, Object> assignee = new LinkedHashMap<>();
+                assignee.put("name", task.getAsignadoA().getNombre());
+                assignee.put("initials", getInitials(task.getAsignadoA().getNombre()));
+                taskMap.put("assignee", assignee);
+            }
 
-        return ResponseEntity.ok(sprintDto);
+            // Determinar la columna basada en el estado
+            String columnKey = mapEstadoToColumn(task.getEstado() != null ? task.getEstado().getNombre() : null);
+            columns.get(columnKey).add(taskMap);
+        }
+
+        // Crear la respuesta final
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("id", sprint.getId());
+        response.put("nombre", sprint.getNombre());
+        response.put("fechaInicio", sprint.getFechaInicio());
+        response.put("fechaFin", sprint.getFechaFin());
+        response.put("estado", sprint.getEstado());
+        response.put("columns", columns);
+
+        return ResponseEntity.ok(response);
+    }
+
+    private String mapEstadoToColumn(String estado) {
+        if (estado == null) return "todo";
+        
+        switch (estado.toLowerCase()) {
+            case "completado": return "done";
+            case "en proceso": return "inProgress";
+            case "pendiente": return "todo";
+            case "en revisión": return "review";
+            case "bloqueado": return "blocked";
+            case "cancelado": return "cancelled";
+            default: return "todo";
+        }
+    }
+
+    private String mapPriority(Long prioridadId) {
+        if (prioridadId == null) return "medium";
+        
+        switch (prioridadId.intValue()) {
+            case 1: return "highest";
+            case 2: return "high";
+            case 3: return "medium";
+            case 4: return "low";
+            case 5: return "lowest";
+            default: return "medium";
+        }
+    }
+
+    private String getInitials(String name) {
+        if (name == null || name.isBlank()) {
+            return "??";
+        }
+        
+        String[] parts = name.split("\\s+");
+        if (parts.length == 1) {
+            return name.substring(0, Math.min(2, name.length())).toUpperCase();
+        }
+        
+        return (parts[0].charAt(0) + "" + parts[parts.length - 1].charAt(0)).toUpperCase();
     }
 
     // --- Get All Sprints with Tasks (New) --- //

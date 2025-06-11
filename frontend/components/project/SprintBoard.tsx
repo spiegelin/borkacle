@@ -20,6 +20,7 @@ interface Task {
   type: "bug" | "task" | "story" | "epic"
   priority: "highest" | "high" | "medium" | "low" | "lowest"
   status: "todo" | "inProgress" | "review" | "done" | "blocked" | "cancelled"
+  description?: string
   assignee?: {
     name: string
     avatar?: string
@@ -59,37 +60,57 @@ export function SprintBoard({ sprintId, onBack }: SprintBoardProps) {
     try {
       const response = await api.get(`/api/sprints/${sprintId}`)
       const sprint = response.data
-      const tasks = sprint.tasks || []
-      // Agrupa las tareas por estado usando defaultColumns
+      console.log('Sprint data:', sprint) // Debug log
+      
+      // Inicializar las columnas con defaultColumns
       let newColumns: Columns = { ...defaultColumns }
-      tasks.forEach((task: any) => {
-        let statusKey: Task["status"] = "todo"
-        switch (task.estado) {
-          case "Completado": statusKey = "done"; break
-          case "En Proceso": statusKey = "inProgress"; break
-          case "Pendiente": statusKey = "todo"; break
-          case "En Revisión": statusKey = "review"; break
-          case "Bloqueado": statusKey = "blocked"; break
-          case "Cancelado": statusKey = "cancelled"; break
-          default: statusKey = "todo"
-        }
-        if (newColumns[statusKey]) {
-          newColumns[statusKey].tasks.push({
-            id: String(task.id),
-            title: task.titulo,
-            status: statusKey,
-            type: "task", // valor por defecto, puedes ajustar si tu backend lo provee
-            priority: "medium", // valor por defecto, puedes ajustar si tu backend lo provee
-          })
-        }
-      })
+      
+      // Mapear las columnas del backend a las columnas del frontend
+      if (sprint.columns) {
+        Object.entries(sprint.columns).forEach(([columnKey, tasks]) => {
+          if (newColumns[columnKey]) {
+            newColumns[columnKey].tasks = tasks as Task[]
+          }
+        })
+      }
+      
+      console.log('Mapped columns:', newColumns) // Debug log
       setColumns(newColumns)
     } catch (err) {
+      console.error("Error fetching sprint tasks:", err)
       setError("No se pudieron cargar las tareas del sprint.")
       setColumns(defaultColumns)
     } finally {
       setLoading(false)
     }
+  }
+
+  const mapTaskType = (tipo: string): Task["type"] => {
+    switch (tipo?.toLowerCase()) {
+      case 'bug': return 'bug'
+      case 'story': return 'story'
+      case 'epic': return 'epic'
+      default: return 'task'
+    }
+  }
+
+  const mapPriority = (prioridadId: number): Task["priority"] => {
+    switch (prioridadId) {
+      case 1: return 'highest'
+      case 2: return 'high'
+      case 3: return 'medium'
+      case 4: return 'low'
+      case 5: return 'lowest'
+      default: return 'medium'
+    }
+  }
+
+  const getInitials = (name: string): string => {
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
   }
 
   const onDragEnd = async (event: DragEndEvent) => {
