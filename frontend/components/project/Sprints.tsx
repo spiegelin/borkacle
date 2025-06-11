@@ -65,12 +65,12 @@ export function Sprints() {
         })
         
         return {
-          id: sprint.id.toString(),
-          nombre: sprint.nombre,
-          estado: sprint.estado,
-          fechaInicio: sprint.fechaInicio,
-          fechaFin: sprint.fechaFin,
-          tasks: {
+        id: sprint.id.toString(),
+        nombre: sprint.nombre,
+        estado: sprint.estado,
+        fechaInicio: sprint.fechaInicio,
+        fechaFin: sprint.fechaFin,
+        tasks: {
             total: tasks.length,
             completed: completedTasks,
             inProgress: inProgressTasks,
@@ -168,78 +168,78 @@ export function Sprints() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Collapsible open={openSprints.includes(sprint.id)}>
-                        <CollapsibleTrigger
-                          onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            toggleSprint(sprint.id, e)
-                          }}
-                          className="p-1 hover:bg-gray-100 rounded"
-                        >
-                          {openSprints.includes(sprint.id) ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
-                        </CollapsibleTrigger>
-                        <CollapsibleContent>
-                          <CardContent 
-                            className="p-4 pt-0"
-                            onClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                            }}
-                          >
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                              <div className="flex items-center gap-2">
-                                <Clock className="h-4 w-4 text-gray-500" />
-                                <div>
-                                  <p className="text-sm text-gray-500">Total Tasks</p>
-                                  <p className="font-medium">{sprint.tasks.total}</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <CheckCircle className="h-4 w-4 text-green-500" />
-                                <div>
-                                  <p className="text-sm text-gray-500">Completed</p>
-                                  <p className="font-medium">{sprint.tasks.completed}</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Clock className="h-4 w-4 text-orange-500" />
-                                <div>
-                                  <p className="text-sm text-gray-500">In Progress</p>
-                                  <p className="font-medium">{sprint.tasks.inProgress}</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Clock className="h-4 w-4 text-gray-500" />
-                                <div>
-                                  <p className="text-sm text-gray-500">To Do</p>
-                                  <p className="font-medium">{sprint.tasks.todo}</p>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="mt-4 space-y-2">
-                              <div className="flex justify-between text-sm">
-                                <span>Progress</span>
-                                <span>
-                                  {sprint.tasks.total > 0
-                                    ? Math.round((sprint.tasks.completed / sprint.tasks.total) * 100)
-                                    : 0}%
-                                </span>
-                              </div>
-                              <Progress
-                                value={
-                                  sprint.tasks.total > 0
-                                    ? (sprint.tasks.completed / sprint.tasks.total) * 100
-                                    : 0
-                                }
-                                className="h-2"
-                              />
-                            </div>
-                          </CardContent>
-                        </CollapsibleContent>
+                      <CollapsibleTrigger
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          toggleSprint(sprint.id, e)
+                        }}
+                        className="p-1 hover:bg-gray-100 rounded"
+                      >
+                        {openSprints.includes(sprint.id) ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent 
+                    className="p-4 pt-0"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                    }}
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-gray-500" />
+                        <div>
+                          <p className="text-sm text-gray-500">Total Tasks</p>
+                          <p className="font-medium">{sprint.tasks.total}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <div>
+                          <p className="text-sm text-gray-500">Completed</p>
+                          <p className="font-medium">{sprint.tasks.completed}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-orange-500" />
+                        <div>
+                          <p className="text-sm text-gray-500">In Progress</p>
+                          <p className="font-medium">{sprint.tasks.inProgress}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-gray-500" />
+                        <div>
+                          <p className="text-sm text-gray-500">To Do</p>
+                          <p className="font-medium">{sprint.tasks.todo}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-4 space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Progress</span>
+                        <span>
+                          {sprint.tasks.total > 0
+                            ? Math.round((sprint.tasks.completed / sprint.tasks.total) * 100)
+                            : 0}%
+                        </span>
+                      </div>
+                      <Progress
+                        value={
+                          sprint.tasks.total > 0
+                            ? (sprint.tasks.completed / sprint.tasks.total) * 100
+                            : 0
+                        }
+                        className="h-2"
+                      />
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
                       </Collapsible>
                       <div 
                         className="flex-1 cursor-pointer" 

@@ -125,13 +125,13 @@ public class TaskController {
     public ResponseEntity<?> assignUserToTask(@PathVariable Long taskId, @RequestBody Map<String, Long> payload) {
         try {
             logger.info("Received user assignment request for task {}: {}", taskId, payload);
-            Long usuarioId = payload.get("userId");
-            if (usuarioId == null) {
+        Long usuarioId = payload.get("userId");
+        if (usuarioId == null) {
                 logger.error("No userId provided in request");
                 return ResponseEntity.badRequest().body(Map.of("error", "userId is required"));
-            }
+        }
             
-            Tarea tareaActualizada = tareaService.assignUser(taskId, usuarioId);
+        Tarea tareaActualizada = tareaService.assignUser(taskId, usuarioId);
             if (tareaActualizada == null) {
                 logger.error("Task not found with id: {}", taskId);
                 return ResponseEntity.notFound().build();
@@ -177,15 +177,15 @@ public class TaskController {
             logger.info("Received edit request for task {}: {}", taskId, request);
             
             // First update the task with the provided fields
-            Tarea tareaActualizada = tareaService.updateTask(
-                taskId,
-                request.titulo,
-                request.descripcion,
-                request.tiempoEstimado,
-                request.estadoId,
-                request.prioridadId,
-                request.proyectoId,
-                request.sprintId,
+        Tarea tareaActualizada = tareaService.updateTask(
+            taskId,
+            request.titulo,
+            request.descripcion,
+            request.tiempoEstimado,
+            request.estadoId,
+            request.prioridadId,
+            request.proyectoId,
+            request.sprintId,
                 request.tiempoReal,
                 request.tipo
             );

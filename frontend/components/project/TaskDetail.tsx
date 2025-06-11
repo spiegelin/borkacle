@@ -320,19 +320,19 @@ export function TaskDetail({ task, onBack }: TaskDetailProps) {
                 </div>
               ) : (
                 editedTask.assignee ? (
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-6 w-6">
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-6 w-6">
                       {editedTask.assignee.avatar && (
                         <AvatarImage src={editedTask.assignee.avatar} alt={editedTask.assignee.name} />
-                      )}
-                      <AvatarFallback className="text-[10px] bg-[#3A3A3A] text-white">
+                    )}
+                    <AvatarFallback className="text-[10px] bg-[#3A3A3A] text-white">
                         {editedTask.assignee.initials}
-                      </AvatarFallback>
-                    </Avatar>
+                    </AvatarFallback>
+                  </Avatar>
                     <span className="text-sm">{editedTask.assignee.name}</span>
-                  </div>
-                ) : (
-                  <span className="text-sm text-gray-500">Unassigned</span>
+                </div>
+              ) : (
+                <span className="text-sm text-gray-500">Unassigned</span>
                 )
               )}
             </div>

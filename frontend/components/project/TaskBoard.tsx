@@ -358,22 +358,22 @@ export function TaskBoard() {
                     strategy={verticalListSortingStrategy}
                   >
                     <DroppableColumn columnId={column.id}>
-                      <div className="space-y-2 min-h-[200px]">
-                        {column.tasks.length === 0 ? (
-                          <div className="text-gray-400 text-center py-4">
-                            No hay tareas en esta columna
-                          </div>
-                        ) : (
-                          column.tasks.map((task: Task) => (
-                            <SortableTask 
-                              key={task.id} 
-                              task={task} 
-                              getPriorityIcon={getPriorityIcon}
-                              getTypeIcon={getTypeIcon}
-                            />
-                          ))
-                        )}
-                      </div>
+                    <div className="space-y-2 min-h-[200px]">
+                      {column.tasks.length === 0 ? (
+                        <div className="text-gray-400 text-center py-4">
+                          No hay tareas en esta columna
+                        </div>
+                      ) : (
+                        column.tasks.map((task: Task) => (
+                          <SortableTask 
+                            key={task.id} 
+                            task={task} 
+                            getPriorityIcon={getPriorityIcon}
+                            getTypeIcon={getTypeIcon}
+                          />
+                        ))
+                      )}
+                    </div>
                     </DroppableColumn>
                   </SortableContext>
                 </CardContent>

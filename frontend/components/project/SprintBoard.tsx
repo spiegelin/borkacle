@@ -60,9 +60,8 @@ export function SprintBoard({ sprintId, onBack }: SprintBoardProps) {
       const response = await api.get(`/api/sprints/${sprintId}`)
       const sprint = response.data
       const tasks = sprint.tasks || []
-
-      // Agrupa las tareas por estado
-      const newColumns: Columns = JSON.parse(JSON.stringify(defaultColumns))
+      // Agrupa las tareas por estado usando defaultColumns
+      let newColumns: Columns = { ...defaultColumns }
       tasks.forEach((task: any) => {
         let statusKey: Task["status"] = "todo"
         switch (task.estado) {
@@ -79,9 +78,8 @@ export function SprintBoard({ sprintId, onBack }: SprintBoardProps) {
             id: String(task.id),
             title: task.titulo,
             status: statusKey,
-            type: (task.type as Task["type"]) || "task",
-            priority: (task.priority as Task["priority"]) || "medium",
-            assignee: task.assignee,
+            type: "task", // valor por defecto, puedes ajustar si tu backend lo provee
+            priority: "medium", // valor por defecto, puedes ajustar si tu backend lo provee
           })
         }
       })
@@ -116,10 +114,10 @@ export function SprintBoard({ sprintId, onBack }: SprintBoardProps) {
         destinationIndex = column.tasks.length
       } else {
         const overIndex = column.tasks.findIndex((task: Task) => task.id === overId)
-        if (overIndex !== -1) {
+          if (overIndex !== -1) {
           destinationColumnId = columnId
           destinationIndex = overIndex
-        }
+          }
       }
     })
     if (sourceColumnId === "" || destinationColumnId === "") return
@@ -130,10 +128,13 @@ export function SprintBoard({ sprintId, onBack }: SprintBoardProps) {
     const destinationColumn = newColumns[destinationColumnId as keyof Columns]
     destinationColumn.tasks.splice(destinationIndex, 0, movedTask)
     setColumns(newColumns)
+    // Actualizar el estado en el backend igual que en TaskBoard
     try {
-      const taskId = movedTask.id
-      const estadoId = getEstadoIdFromStatus(destinationColumnId)
-      await api.put(`/api/tareas/${taskId}/estado`, { estadoId })
+      const taskId = movedTask.id;
+      const estadoId = getEstadoIdFromStatus(destinationColumnId);
+      await api.put(`/api/tareas/${taskId}/estado`, { estadoId });
+      // Opcional: recargar tareas del sprint para mantener sincronizado
+      // await fetchSprintTasks();
     } catch (error) {
       setError("No se pudo actualizar el estado de la tarea. Los cambios podrían no guardarse.")
     }
@@ -215,60 +216,60 @@ export function SprintBoard({ sprintId, onBack }: SprintBoardProps) {
       ) : error ? (
         <div className="text-red-500">{error}</div>
       ) : (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={(event) => setActiveId(event.active.id as string)}
-          onDragEnd={onDragEnd}
-          onDragCancel={() => setActiveId(null)}
-        >
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={(event) => setActiveId(event.active.id as string)}
+        onDragEnd={onDragEnd}
+        onDragCancel={() => setActiveId(null)}
+      >
           <div className="flex overflow-x-auto pb-6 gap-6" style={{ minHeight: "calc(100vh - 200px)" }}>
-            {Object.values(columns).map((column) => (
+          {Object.values(columns).map((column) => (
               <Card key={column.id} className="bg-gray-50 flex-shrink-0" style={{ width: "320px" }}>
                 <CardContent className="p-5">
-                  <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-4">
                     <h2 className="font-semibold text-lg text-[#3A3A3A]">{column.title}</h2>
                     <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">{column.tasks.length}</span>
-                  </div>
-                  <SortableContext
-                    items={column.tasks.map((task: Task) => task.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
+                </div>
+                <SortableContext
+                  items={column.tasks.map((task: Task) => task.id)}
+                  strategy={verticalListSortingStrategy}
+                >
                     <DroppableColumn columnId={column.id}>
-                      <div className="space-y-2 min-h-[200px]">
+                  <div className="space-y-2 min-h-[200px]">
                         {column.tasks.length === 0 ? (
                           <div className="text-gray-400 text-center py-4">
                             No hay tareas en esta columna
                           </div>
                         ) : (
                           column.tasks.map((task: Task) => (
-                            <SortableTask 
-                              key={task.id} 
-                              task={task} 
-                              getPriorityIcon={getPriorityIcon}
-                              getTypeIcon={getTypeIcon}
-                            />
+                      <SortableTask 
+                        key={task.id} 
+                        task={task} 
+                        getPriorityIcon={getPriorityIcon}
+                        getTypeIcon={getTypeIcon}
+                      />
                           ))
                         )}
-                      </div>
+                  </div>
                     </DroppableColumn>
-                  </SortableContext>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          <DragOverlay>
+                </SortableContext>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <DragOverlay>
             {activeId && activeTask && (
               <div className="bg-white p-3 rounded-lg shadow-lg">
-                <div className="flex items-start gap-2">
-                  <div className="flex-1 min-w-0">
+              <div className="flex items-start gap-2">
+                <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-[#3A3A3A] truncate">{activeTask.title}</p>
-                  </div>
+                    </div>
                 </div>
               </div>
             )}
-          </DragOverlay>
-        </DndContext>
+        </DragOverlay>
+      </DndContext>
       )}
     </div>
   )

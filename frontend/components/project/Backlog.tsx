@@ -69,38 +69,35 @@ export function Backlog() {
       const response = await api.get('/api/tareas/board')
       const data = response.data
       
-      // The API returns a map of columns with tasks
-      // We need to flatten all tasks into a single array
+      console.log('API Response:', data)
+      
       const allTasks: Task[] = []
       
-      // Iterate through each column in the response
       Object.entries(data.columns || {}).forEach(([columnKey, columnTasks]: [string, any]) => {
         if (Array.isArray(columnTasks)) {
           columnTasks.forEach((task: any) => {
-            // Fetch detailed task data for each task
-            api.get(`/api/tasks/${task.id}`).then(detailResponse => {
-              const taskDetail = detailResponse.data;
-              allTasks.push({
-                id: task.id || '',
-                title: task.title || '',
-                type: (task.type?.toLowerCase() || 'task') as Task['type'],
-                priority: task.priority || 'medium',
-                status: columnKey as Task['status'],
-                description: taskDetail.descripcion || '',
-                assignee: task.assignee ? {
-                  name: task.assignee.name || '',
-                  initials: getInitials(task.assignee.name || '')
-                } : undefined,
-                created: formatDate(task.created),
-                updated: formatDate(task.updated || task.created)
-              });
-              setTasks([...allTasks]);
-            }).catch(err => {
-              console.error(`Error fetching details for task ${task.id}:`, err);
-            });
-          });
+            console.log('Task data:', task)
+            allTasks.push({
+              id: String(task.id || ''),
+              title: task.titulo || task.title || '',
+              type: mapTaskType(task.tipo || task.type) as Task['type'],
+              priority: mapPriority(task.prioridadId || task.priorityId) || 'medium',
+              status: columnKey as Task['status'],
+              description: task.descripcion || task.description || '',
+              assignee: task.asignadoA || task.assignee ? {
+                name: (task.asignadoA?.nombre || task.assignee?.name || ''),
+                avatar: (task.asignadoA?.avatar || task.assignee?.avatar),
+                initials: getInitials(task.asignadoA?.nombre || task.assignee?.name || '')
+              } : undefined,
+              created: formatDate(task.fechaCreacion || task.created),
+              updated: formatDate(task.fechaActualizacion || task.updated || task.fechaCreacion || task.created)
+            })
+          })
         }
-      });
+      })
+      
+      console.log('Mapped tasks:', allTasks)
+      setTasks(allTasks)
     } catch (err) {
       console.error("Error fetching tasks:", err)
       setError("Failed to load tasks. Please try again later.")
@@ -109,15 +106,23 @@ export function Backlog() {
     }
   }
 
-  const mapPriority = (priorityId: number): Task["priority"] => {
-    // Map your priority IDs to the corresponding priority levels
-    switch (priorityId) {
-      case 1: return "highest"
-      case 2: return "high"
-      case 3: return "medium"
-      case 4: return "low"
-      case 5: return "lowest"
-      default: return "medium"
+  const mapTaskType = (tipo: string): Task['type'] => {
+    switch (tipo?.toLowerCase()) {
+      case 'bug': return 'bug'
+      case 'story': return 'story'
+      case 'epic': return 'epic'
+      default: return 'task'
+    }
+  }
+
+  const mapPriority = (prioridadId: number): Task['priority'] => {
+    switch (prioridadId) {
+      case 1: return 'highest'
+      case 2: return 'high'
+      case 3: return 'medium'
+      case 4: return 'low'
+      case 5: return 'lowest'
+      default: return 'medium'
     }
   }
 
