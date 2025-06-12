@@ -26,15 +26,9 @@ steps:
     command: |
       # Use the first 7 characters of the Git commit hash as the version.
       # This is a standard practice and guarantees a unique version for each build.
-      VERSION=$(echo "$OCI_COMMIT_HASH" | cut -c1-7)
+      VERSION=$(echo "$OCI_PRIMARY_SOURCE_COMMIT_HASH" | cut -c1-7)
       echo "VERSION=$VERSION" > build_vars.env
       echo "🔢 Version set from Git commit: $VERSION"
-
-  - type: Command
-    name: Load Version
-    command: |
-      source build_vars.env
-      echo "Versión actual: $VERSION"
 
   - type: Command
     name: Build & Push Frontend
