@@ -106,6 +106,10 @@ steps:
       echo "⚙️ Configuring kubeconfig for cluster..."
       oci ce cluster create-kubeconfig --cluster-id "${OKE_CLUSTER_ID}" --file $HOME/.kube/config --region "${REGION}" --token-version 2.0.0 --auth resource_principal
 
+      # --- DIAGNOSTIC STEP ---
+      echo "🔎 Listing all files to find the correct path for the wallet..."
+      ls -lR
+
       # Create namespace if it doesn't exist
       echo "Ensuring 'borkacle' namespace exists..."
       kubectl create namespace borkacle || true
@@ -124,10 +128,10 @@ steps:
         --from-literal=JWT_SECRET="${JWT_SECRET}" \
         --from-literal=JWT_EXPIRATION_MS="${JWT_EXPIRATION_MS}"
 
-      # Create/update wallet secret from the wallet directory
-      echo "🔑 Creating/updating wallet secret..."
-      kubectl delete secret wallet-secret -n borkacle --ignore-not-found=true
-      kubectl create secret generic wallet-secret -n borkacle --from-file=./wallet
+      # NOTE: The wallet-secret is no longer managed by this pipeline due to OCI parameter size limits.
+      # It is assumed that the 'wallet-secret' has been created manually in the 'borkacle' namespace
+      # using the instructions from DEPLOY.md. The pipeline now depends on its existence.
+      echo "ℹ️ Assuming 'wallet-secret' already exists in the cluster."
 
       # Deploy all manifests
       echo "🚀 Applying Kubernetes manifests..."
