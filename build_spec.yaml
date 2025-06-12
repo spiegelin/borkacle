@@ -126,7 +126,8 @@ steps:
         --from-literal=TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN}" \
         --from-literal=TELEGRAM_BOT_NAME="${TELEGRAM_BOT_NAME}" \
         --from-literal=JWT_SECRET="${JWT_SECRET}" \
-        --from-literal=JWT_EXPIRATION_MS="${JWT_EXPIRATION_MS}"
+        --from-literal=JWT_EXPIRATION_MS="${JWT_EXPIRATION_MS}" \
+        --from-literal=oracle.net.wallet_location="(SOURCE=(METHOD=file)(METHOD_DATA=(DIRECTORY=/app/wallet)))"
 
       # NOTE: The wallet-secret is no longer managed by this pipeline due to OCI parameter size limits.
       # It is assumed that the 'wallet-secret' has been created manually in the 'borkacle' namespace
