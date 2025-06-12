@@ -23,7 +23,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -102,7 +104,9 @@ public class KpiController {
                     
                     // Contar tareas completadas
                     long tareasCompletadas = tareas.stream()
-                            .filter(t -> t.getEstado() != null && "Completada".equals(t.getEstado().getNombre()))
+                            .filter(t -> t.getEstado() != null
+                                && t.getEstado().getNombre() != null
+                                && t.getEstado().getNombre().toLowerCase().contains("complet"))
                             .count();
                     
                     sprintData.setHorasEstimadas(horasEstimadas);
@@ -133,15 +137,22 @@ public class KpiController {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             logger.info("KpiController: Usuario autenticado: {}", auth.getName());
             
-            List<KpiPersonaResponse> result = new ArrayList<>();
-            
-            // Obtener todos los usuarios
+            // Obtener todos los usuarios y sprints en una sola consulta
             List<Usuario> usuarios = usuarioRepository.findAll();
-            logger.info("KpiController: Usuarios encontrados: {}", usuarios.size());
-            
-            // Obtener todos los sprints
             List<Sprint> sprints = sprintRepository.findAll();
-            logger.info("KpiController: Sprints encontrados: {}", sprints.size());
+            
+            // Obtener todas las tareas con sus relaciones cargadas
+            List<Tarea> todasLasTareas = tareaRepository.findAllWithRelations();
+            
+            // Crear un mapa para acceso rápido a las tareas por usuario y sprint
+            Map<Long, Map<Long, List<Tarea>>> tareasPorUsuarioYSprint = todasLasTareas.stream()
+                .filter(t -> t.getAsignadoA() != null && t.getSprint() != null)
+                .collect(Collectors.groupingBy(
+                    t -> t.getAsignadoA().getId(),
+                    Collectors.groupingBy(t -> t.getSprint().getId())
+                ));
+            
+            List<KpiPersonaResponse> result = new ArrayList<>();
             
             // Para cada usuario, calcular KPIs por sprint
             for (Usuario usuario : usuarios) {
@@ -156,18 +167,12 @@ public class KpiController {
                     sprintData.setSprintId(sprint.getId());
                     sprintData.setSprintNombre(sprint.getNombre());
                     
-                    // Obtener tareas del usuario en el sprint
-                    List<Tarea> tareas = tareaRepository.findByUsuarioIdAndSprintId(usuario.getId(), sprint.getId());
-                    logger.info("KpiController: Tareas encontradas para usuario {} y sprint {}: {}", 
-                              usuario.getNombre(), sprint.getNombre(), tareas.size());
+                    // Obtener tareas del usuario en el sprint del mapa
+                    List<Tarea> tareas = tareasPorUsuarioYSprint
+                        .getOrDefault(usuario.getId(), new HashMap<>())
+                        .getOrDefault(sprint.getId(), new ArrayList<>());
                     
-                    // Mostrar detalles de cada tarea para depuración
-                    for (Tarea t : tareas) {
-                        logger.info("Tarea: ID={}, Título={}, TiempoEstimado={}, TiempoReal={}",
-                                 t.getId(), t.getTitulo(), t.getTiempoEstimado(), t.getTiempoReal());
-                    }
-                    
-                    // Calcular horas estimadas y reales
+                    // Calcular métricas
                     double horasEstimadas = tareas.stream()
                             .mapToDouble(t -> t.getTiempoEstimado() != null ? t.getTiempoEstimado() : 0)
                             .sum();
@@ -176,13 +181,13 @@ public class KpiController {
                             .mapToDouble(t -> t.getTiempoReal() != null ? t.getTiempoReal() : 0)
                             .sum();
                     
-                    // Contar tareas completadas
                     long tareasCompletadas = tareas.stream()
-                            .filter(t -> t.getEstado() != null && "Completada".equals(t.getEstado().getNombre()))
+                            .filter(t -> t.getEstado() != null
+                                && t.getEstado().getNombre() != null
+                                && t.getEstado().getNombre().toLowerCase().contains("complet"))
                             .count();
                     
-                    // Calcular la eficiencia (si las horas estimadas > 0)
-                    double eficiencia = horasEstimadas > 0 ? (horasEstimadas / horasReales) * 100 : 0;
+                    double eficiencia = horasReales > 0 ? (horasEstimadas / horasReales) * 100 : 0;
                     
                     sprintData.setHorasEstimadas(horasEstimadas);
                     sprintData.setHorasReales(horasReales);

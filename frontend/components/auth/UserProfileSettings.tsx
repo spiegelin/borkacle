@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -8,13 +8,30 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useAuth } from "@/components/auth/AuthContext"
+import api from "@/lib/api"
 
 export function UserProfileSettings() {
-  const [user, setUser] = useState({
-    name: "John Doe",
-    email: "john.doe@oracle.com",
-    avatar: "/placeholder-user.jpg",
-  })
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (user?.id) {
+        try {
+          setLoading(true);
+          const res = await api.get(`/api/users/${user.id}`);
+          setProfile(res.data);
+        } catch (e) {
+          setProfile(null);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    fetchProfile();
+  }, [user]);
 
   return (
     <div className="container mx-auto py-10">
@@ -28,121 +45,24 @@ export function UserProfileSettings() {
             </CardHeader>
             <CardContent className="flex flex-col items-center">
               <Avatar className="h-24 w-24 mb-4">
-                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarImage src="/placeholder-user.jpg" alt={profile?.nombre || "User"} />
                 <AvatarFallback>
-                  {user.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .toUpperCase()}
+                  {profile?.nombre
+                    ? profile.nombre.split(" ").map((n: string) => n[0]).join("").toUpperCase()
+                    : "?"}
                 </AvatarFallback>
               </Avatar>
-              <h2 className="text-xl font-semibold">{user.name}</h2>
-              <p className="text-sm text-gray-500">{user.email}</p>
+              <h2 className="text-xl font-semibold">{loading ? "Cargando..." : profile?.nombre || user?.nombre || "-"}</h2>
+              <p className="text-sm text-gray-500">{loading ? "" : profile?.email || user?.email || "-"}</p>
+              <p className="text-xs text-gray-500 mt-1">Rol: <span className="text-gray-700 font-medium">{profile?.rol || user?.rol || "-"}</span></p>
+              {profile?.equipoNombre && (
+                <p className="text-xs text-gray-500 mt-1">Equipo: <span className="text-gray-700 font-medium">{profile.equipoNombre}</span></p>
+              )}
               <Button className="mt-4 bg-[#C74634] hover:bg-[#b03d2e]">Change Avatar</Button>
             </CardContent>
           </Card>
         </div>
         <div className="w-full md:w-2/3">
-          <Tabs defaultValue="account">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="account">Account</TabsTrigger>
-              <TabsTrigger value="security">Security</TabsTrigger>
-              <TabsTrigger value="notifications">Notifications</TabsTrigger>
-              <TabsTrigger value="integrations">Integrations</TabsTrigger>
-            </TabsList>
-            <TabsContent value="account">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Account Information</CardTitle>
-                  <CardDescription>Update your account details</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Name</Label>
-                    <Input id="name" value={user.name} onChange={(e) => setUser({ ...user, name: e.target.value })} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={user.email}
-                      onChange={(e) => setUser({ ...user, email: e.target.value })}
-                    />
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button className="bg-[#C74634] hover:bg-[#b03d2e]">Save Changes</Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-            <TabsContent value="security">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Security Settings</CardTitle>
-                  <CardDescription>Manage your account security</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="current-password">Current Password</Label>
-                    <Input id="current-password" type="password" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="new-password">New Password</Label>
-                    <Input id="new-password" type="password" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password">Confirm New Password</Label>
-                    <Input id="confirm-password" type="password" />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch id="two-factor" />
-                    <Label htmlFor="two-factor">Enable Two-Factor Authentication</Label>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button className="bg-[#C74634] hover:bg-[#b03d2e]">Update Security Settings</Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-            <TabsContent value="notifications">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Notification Preferences</CardTitle>
-                  <CardDescription>Manage how you receive notifications</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch id="email-notifications" />
-                    <Label htmlFor="email-notifications">Email Notifications</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch id="push-notifications" />
-                    <Label htmlFor="push-notifications">Push Notifications</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch id="sms-notifications" />
-                    <Label htmlFor="sms-notifications">SMS Notifications</Label>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button className="bg-[#C74634] hover:bg-[#b03d2e]">Save Preferences</Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-            <TabsContent value="integrations">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Integrations</CardTitle>
-                  <CardDescription>Manage your connected applications and services</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p>No integrations available at the moment.</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
         </div>
       </div>
     </div>

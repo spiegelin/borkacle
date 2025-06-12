@@ -5,24 +5,12 @@ import { CSS } from "@dnd-kit/utilities"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Link from "next/link"
-
-interface Task {
-  id: string
-  title: string
-  type: "bug" | "task" | "story" | "epic"
-  priority: "highest" | "high" | "medium" | "low" | "lowest"
-  status: "todo" | "inProgress" | "review" | "done" | "blocked" | "cancelled"
-  assignee?: {
-    name: string
-    avatar?: string
-    initials: string
-  }
-}
+import type { Task, TaskPriority, TaskType } from "@/types/task"
 
 interface SortableTaskProps {
   task: Task
-  getPriorityIcon: (priority: Task["priority"]) => React.ReactNode
-  getTypeIcon: (type: Task["type"]) => React.ReactNode
+  getPriorityIcon: (priority: TaskPriority) => React.ReactNode
+  getTypeIcon: (type: TaskType) => React.ReactNode
 }
 
 export function SortableTask({ task, getPriorityIcon, getTypeIcon }: SortableTaskProps) {

@@ -28,20 +28,7 @@ import { Badge } from "@/components/ui/badge"
 import { CreateTaskDialog } from "@/components/ui/CreateTaskDialog"
 import { SortableTask } from "@/components/tasks/SortableTask"
 import api from "@/lib/api"
-import type { ItemType as Task2, Priority, Status } from "@/types/item"
-
-interface Task {
-  id: string
-  title: string
-  type: "bug" | "task" | "story" | "epic"
-  priority: "highest" | "high" | "medium" | "low" | "lowest"
-  status: "todo" | "inProgress" | "review" | "done" | "blocked" | "cancelled"
-  assignee?: {
-    name: string
-    avatar?: string
-    initials: string
-  }
-}
+import type { Task, TaskPriority as Priority, TaskStatus as Status } from "@/types/task"
 
 interface Column {
   id: string

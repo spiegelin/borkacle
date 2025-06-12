@@ -8,24 +8,11 @@ import { SortableTask } from "@/components/tasks/SortableTask"
 import api from "@/lib/api"
 import { defaultColumns, columnTitles } from "./TaskBoard"
 import { Plus, MoreHorizontal, AlertCircle, CheckCircle2, Clock, ArrowUpRight } from "lucide-react"
+import type { Task } from "@/types/task"
 
 interface SprintBoardProps {
   sprintId: string
   onBack: () => void
-}
-
-interface Task {
-  id: string
-  title: string
-  type: "bug" | "task" | "story" | "epic"
-  priority: "highest" | "high" | "medium" | "low" | "lowest"
-  status: "todo" | "inProgress" | "review" | "done" | "blocked" | "cancelled"
-  description?: string
-  assignee?: {
-    name: string
-    avatar?: string
-    initials: string
-  }
 }
 
 interface Column {

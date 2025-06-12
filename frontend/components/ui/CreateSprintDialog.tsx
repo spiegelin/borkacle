@@ -95,10 +95,6 @@ export function CreateSprintDialog({ open, setOpen, onCreateSprint }: CreateSpri
             </div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="goal" className="text-right">
-              Sprint Goal
-            </Label>
-            <Textarea id="goal" className="col-span-3" placeholder="What do you want to achieve in this sprint?" />
           </div>
         </div>
         <DialogFooter>

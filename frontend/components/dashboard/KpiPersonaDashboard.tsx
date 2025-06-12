@@ -61,22 +61,71 @@ export function KpiPersonaDashboard({ individualUserView = false, userId }: KpiP
   const { user } = useAuth()
 
   useEffect(() => {
-    fetchKpiData()
-  }, [])
+    const fetchData = async () => {
+      if (!user) return; // No hacer petición si no hay usuario autenticado
+      
+      setLoading(true)
+      setError(null)
+      setErrorDetails(null)
+      
+      try {
+        console.log("Iniciando solicitud de KPI por persona")
+        
+        // Aumentar el timeout a 60 segundos
+        const response = await api.get('/api/kpi/persona', {
+          timeout: 60000 // 60 segundos
+        })
+        
+        console.log("Respuesta recibida:", response)
+        let data = response.data
+        
+        // Filter data if in individual view mode
+        if (individualUserView && userId) {
+          data = data.filter((item: KpiPersonaData) => item.usuarioId === userId)
+        }
+        
+        setKpiData(data)
+        if (data.length > 0 && !activeUser) {
+          setActiveUser(data[0].usuarioNombre)
+        }
+      } catch (err: any) {
+        console.error("Error al obtener datos KPI:", err)
+        
+        if (err.code === 'ECONNABORTED') {
+          setError("La solicitud está tomando demasiado tiempo. Por favor, intente nuevamente.")
+          setErrorDetails("Timeout de la petición. El servidor puede estar sobrecargado o la conexión es lenta.")
+        } else if (err.response) {
+          setError("Error del servidor al obtener datos KPI")
+          setErrorDetails(JSON.stringify(err.response.data, null, 2))
+        } else if (err.request) {
+          setError("No se recibió respuesta del servidor")
+          setErrorDetails("El servidor no está respondiendo. Por favor, verifique su conexión e intente nuevamente.")
+        } else {
+          setError("Error al obtener datos KPI")
+          setErrorDetails(err.message)
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  const fetchKpiData = async () => {
+    fetchData()
+  }, [user, individualUserView, userId])
+
+  // Función para recargar los datos con retry
+  const handleRefresh = async () => {
+    setActiveUser(null) // Reset active user to force a new fetch
+    setKpiData([]) // Clear existing data
     setLoading(true)
     setError(null)
     setErrorDetails(null)
     
     try {
-      console.log("Iniciando solicitud de KPI por persona")
+      const response = await api.get('/api/kpi/persona', {
+        timeout: 60000 // 60 segundos
+      })
       
-      const response = await api.get('/api/kpi/persona')
-      console.log("Respuesta recibida:", response)
       let data = response.data
-      
-      // Filter data if in individual view mode
       if (individualUserView && userId) {
         data = data.filter((item: KpiPersonaData) => item.usuarioId === userId)
       }
@@ -86,16 +135,11 @@ export function KpiPersonaDashboard({ individualUserView = false, userId }: KpiP
         setActiveUser(data[0].usuarioNombre)
       }
     } catch (err: any) {
-      console.error("Error al obtener datos KPI:", err)
-      setError("No se pudieron cargar los datos KPI")
-      
-      // Mostrar detalles del error para debugging
-      if (err.response) {
-        setErrorDetails(JSON.stringify(err.response.data, null, 2))
-      } else if (err.request) {
-        setErrorDetails("No se recibió respuesta del servidor")
+      console.error("Error al recargar datos KPI:", err)
+      if (err.code === 'ECONNABORTED') {
+        setError("La solicitud está tomando demasiado tiempo. Por favor, intente nuevamente.")
       } else {
-        setErrorDetails(err.message)
+        setError("Error al recargar los datos")
       }
     } finally {
       setLoading(false)
@@ -127,6 +171,90 @@ export function KpiPersonaDashboard({ individualUserView = false, userId }: KpiP
   // Colores para los gráficos
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A569BD', '#3498DB', '#2ECC71', '#F1C40F'];
 
+  const renderCharts = () => {
+    if (!kpiData || kpiData.length === 0) return null;
+
+    // Preparar datos para la gráfica de comparación global
+    const globalComparisonData = kpiData.map(user => {
+      const totalEstimadas = user.sprints.reduce((sum, sprint) => sum + sprint.horasEstimadas, 0);
+      const totalReales = user.sprints.reduce((sum, sprint) => sum + sprint.horasReales, 0);
+      return {
+        usuario: user.usuarioNombre,
+        estimadas: totalEstimadas,
+        reales: totalReales
+      };
+    });
+
+    return (
+      <div className="space-y-6">
+        {/* Gráfica de comparación global */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Comparación Global de Horas Estimadas vs Reales</h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={globalComparisonData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="usuario" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="estimadas" name="Horas Estimadas" fill="#8884d8" />
+                <Bar dataKey="reales" name="Horas Reales" fill="#82ca9d" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Gráficas existentes */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Gráfica de Eficiencia */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Eficiencia por Sprint</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={kpiData.find(k => k.usuarioNombre === activeUser)?.sprints || []}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="sprintNombre" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="eficiencia" name="Eficiencia (%)" stroke="#8884d8" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Gráfica de Tareas Completadas */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Tareas Completadas vs Totales</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={kpiData.find(k => k.usuarioNombre === activeUser)?.sprints || []}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="sprintNombre" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="tareasCompletadas" name="Tareas Completadas" fill="#8884d8" />
+                  <Bar dataKey="tareasTotales" name="Tareas Totales" fill="#82ca9d" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -153,11 +281,7 @@ export function KpiPersonaDashboard({ individualUserView = false, userId }: KpiP
                 </div>
               )}
               <div className="flex justify-center mt-4">
-                <Button onClick={fetchKpiData} className="mr-2">
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Reintentar
-                </Button>
-                <Button variant="outline" onClick={() => window.location.reload()}>
+                <Button onClick={() => window.location.reload()}>
                   Recargar página
                 </Button>
               </div>
@@ -175,15 +299,7 @@ export function KpiPersonaDashboard({ individualUserView = false, userId }: KpiP
           {individualUserView ? "Mi KPI Individual" : "KPI por Persona"}
         </h2>
         <div className="flex items-center space-x-2">
-          {!individualUserView && (
-            <Tabs value={view} onValueChange={(value) => setView(value as "team" | "person")} className="mr-4">
-              <TabsList>
-                <TabsTrigger value="team">Por Equipo</TabsTrigger>
-                <TabsTrigger value="person">Por Persona</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          )}
-          <Button variant="outline" size="sm" onClick={fetchKpiData}>
+          <Button variant="outline" size="sm" onClick={handleRefresh}>
             <RefreshCw className="mr-2 h-4 w-4" />
             Actualizar
           </Button>
@@ -233,222 +349,134 @@ export function KpiPersonaDashboard({ individualUserView = false, userId }: KpiP
           )}
 
           {userData && (
-            <Tabs defaultValue="hours" className="space-y-4">
+            <Tabs defaultValue="global" className="space-y-4">
               <TabsList>
-                <TabsTrigger value="hours">Horas Estimadas vs Reales</TabsTrigger>
-                <TabsTrigger value="tasks">Tareas Completadas</TabsTrigger>
-                <TabsTrigger value="efficiency">Eficiencia</TabsTrigger>
-                <TabsTrigger value="summary">Resumen</TabsTrigger>
+                <TabsTrigger value="global">Vista Global</TabsTrigger>
+                <TabsTrigger value="individual">Vista Individual</TabsTrigger>
               </TabsList>
               
-              <TabsContent value="hours" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Horas Estimadas vs Reales por Sprint</CardTitle>
-                    <CardDescription>
-                      Comparación de horas estimadas y reales para {activeUser}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-2">
-                    <div className="h-80">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
-                          data={chartData}
-                          margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
-                          <YAxis />
-                          <Tooltip formatter={(value: number) => [`${value} horas`, '']} />
-                          <Legend />
-                          <Bar dataKey="Estimadas" fill="#8884d8" name="Horas Estimadas" />
-                          <Bar dataKey="Reales" fill="#82ca9d" name="Horas Reales" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
+              <TabsContent value="global">
+                {renderCharts()}
               </TabsContent>
               
-              <TabsContent value="tasks" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Tareas Completadas por Sprint</CardTitle>
-                    <CardDescription>
-                      Progreso de tareas completadas vs totales para {activeUser}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-2">
-                    <div className="h-80">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
-                          data={chartData}
-                          margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend />
-                          <Bar dataKey="TareasCompletadas" fill="#8884d8" name="Tareas Completadas" />
-                          <Bar dataKey="TotalTareas" fill="#82ca9d" name="Total Tareas" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="efficiency" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Eficiencia por Sprint</CardTitle>
-                    <CardDescription>
-                      Porcentaje de eficiencia para {activeUser}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-2">
-                    <div className="h-80">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart
-                          data={chartData}
-                          margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
-                          <YAxis domain={[0, 150]} />
-                          <Tooltip formatter={(value: number) => [`${value}%`, '']} />
-                          <Legend />
-                          <Line 
-                            type="monotone" 
-                            dataKey="Eficiencia" 
-                            stroke="#8884d8" 
-                            name="Eficiencia (Estimado/Real %)" 
-                            dot={{ r: 5 }} 
-                          />
-                          <Line 
-                            type="monotone" 
-                            dataKey="ProgresoTareas" 
-                            stroke="#82ca9d" 
-                            name="Progreso Tareas (%)" 
-                            dot={{ r: 5 }} 
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="summary" className="space-y-4">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <TabsContent value="individual">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card>
                     <CardHeader>
-                      <CardTitle>Distribución de Tareas</CardTitle>
-                      <CardDescription>
-                        Completadas vs. Pendientes
-                      </CardDescription>
+                      <CardTitle>Horas Estimadas vs Reales</CardTitle>
+                      <CardDescription>Comparación de horas por sprint</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="h-64">
+                      <div className="h-80">
                         <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={[
-                                { name: 'Completadas', value: userData.sprints.reduce((acc, sprint) => acc + sprint.tareasCompletadas, 0) },
-                                { name: 'Pendientes', value: userData.sprints.reduce((acc, sprint) => acc + (sprint.tareasTotales - sprint.tareasCompletadas), 0) }
-                              ]}
-                              cx="50%"
-                              cy="50%"
-                              labelLine={false}
-                              outerRadius={80}
-                              fill="#8884d8"
-                              dataKey="value"
-                              nameKey="name"
-                              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                            >
-                              {[0, 1].map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                              ))}
-                            </Pie>
-                            <Tooltip formatter={(value: number) => [`${value} tareas`, '']} />
+                          <BarChart data={chartData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis />
+                            <Tooltip />
                             <Legend />
-                          </PieChart>
+                            <Bar dataKey="Estimadas" fill="#8884d8" />
+                            <Bar dataKey="Reales" fill="#82ca9d" />
+                          </BarChart>
                         </ResponsiveContainer>
                       </div>
                     </CardContent>
                   </Card>
-                  
+
                   <Card>
                     <CardHeader>
-                      <CardTitle>Distribución de Horas</CardTitle>
-                      <CardDescription>
-                        Estimadas vs. Reales
-                      </CardDescription>
+                      <CardTitle>Eficiencia</CardTitle>
+                      <CardDescription>Porcentaje de eficiencia por sprint</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="h-64">
+                      <div className="h-80">
                         <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={[
-                                { name: 'Estimadas', value: userData.sprints.reduce((acc, sprint) => acc + sprint.horasEstimadas, 0) },
-                                { name: 'Reales', value: userData.sprints.reduce((acc, sprint) => acc + sprint.horasReales, 0) }
-                              ]}
-                              cx="50%"
-                              cy="50%"
-                              labelLine={false}
-                              outerRadius={80}
-                              fill="#8884d8"
-                              dataKey="value"
-                              nameKey="name"
-                              label={({ name, value }) => `${name}: ${value} hrs`}
-                            >
-                              {[0, 1].map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index + 2 % COLORS.length]} />
-                              ))}
-                            </Pie>
-                            <Tooltip formatter={(value: number) => [`${value} horas`, '']} />
+                          <LineChart data={chartData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis />
+                            <Tooltip />
                             <Legend />
-                          </PieChart>
+                            <Line type="monotone" dataKey="Eficiencia" stroke="#8884d8" />
+                          </LineChart>
                         </ResponsiveContainer>
                       </div>
                     </CardContent>
                   </Card>
-                  
-                  <Card className="md:col-span-2">
+
+                  <Card>
                     <CardHeader>
-                      <CardTitle>Estadísticas Generales</CardTitle>
-                      <CardDescription>
-                        Resumen de KPIs para {activeUser}
-                      </CardDescription>
+                      <CardTitle>Progreso de Tareas</CardTitle>
+                      <CardDescription>Tareas completadas vs totales</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                        <div className="bg-primary/10 p-4 rounded-lg">
-                          <div className="text-sm text-muted-foreground">Total Tareas</div>
-                          <div className="text-2xl font-bold">
-                            {userData.sprints.reduce((acc, sprint) => acc + sprint.tareasTotales, 0)}
-                          </div>
-                        </div>
-                        <div className="bg-primary/10 p-4 rounded-lg">
-                          <div className="text-sm text-muted-foreground">Tareas Completadas</div>
-                          <div className="text-2xl font-bold">
-                            {userData.sprints.reduce((acc, sprint) => acc + sprint.tareasCompletadas, 0)}
-                          </div>
-                        </div>
-                        <div className="bg-primary/10 p-4 rounded-lg">
-                          <div className="text-sm text-muted-foreground">Horas Estimadas</div>
-                          <div className="text-2xl font-bold">
-                            {userData.sprints.reduce((acc, sprint) => acc + sprint.horasEstimadas, 0)}
-                          </div>
-                        </div>
-                        <div className="bg-primary/10 p-4 rounded-lg">
-                          <div className="text-sm text-muted-foreground">Horas Reales</div>
-                          <div className="text-2xl font-bold">
-                            {userData.sprints.reduce((acc, sprint) => acc + sprint.horasReales, 0)}
-                          </div>
-                        </div>
+                      <div className="h-80">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={chartData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <Bar dataKey="TareasCompletadas" fill="#8884d8" />
+                            <Bar dataKey="TotalTareas" fill="#82ca9d" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Progreso de Tareas por Sprint</CardTitle>
+                      <CardDescription>Tareas completadas en cada sprint</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-[400px]">
+                        {(() => {
+                          const pieData = userData && userData.sprints
+                            ? userData.sprints.map(sprint => ({
+                                name: sprint.sprintNombre,
+                                value: sprint.tareasCompletadas
+                              }))
+                            : [];
+                          console.log("PieChart data:", pieData);
+                          return pieData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <Pie
+                                  data={pieData}
+                                  cx="50%"
+                                  cy="50%"
+                                  labelLine={true}
+                                  outerRadius={120}
+                                  fill="#8884d8"
+                                  dataKey="value"
+                                  nameKey="name"
+                                  label={({ name, value }) => `${name}: ${value}`}
+                                  paddingAngle={2}
+                                >
+                                  {pieData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                  ))}
+                                </Pie>
+                                <Tooltip 
+                                  formatter={(value: number) => [`${value} tareas`, '']}
+                                  contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc' }}
+                                />
+                                <Legend 
+                                  verticalAlign="bottom" 
+                                  height={36}
+                                  formatter={(value) => <span style={{ color: '#666' }}>{value}</span>}
+                                />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          ) : (
+                            <div className="flex items-center justify-center h-full">
+                              <p className="text-gray-500">No hay datos disponibles</p>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </CardContent>
                   </Card>

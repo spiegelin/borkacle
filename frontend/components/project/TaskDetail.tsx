@@ -7,22 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ArrowLeft } from "lucide-react"
 import { useState, useEffect } from "react"
 import api from "@/lib/api"
-
-interface Task {
-  id: string
-  title: string
-  type: "bug" | "task" | "story" | "epic"
-  priority: "highest" | "high" | "medium" | "low" | "lowest"
-  status: "todo" | "inProgress" | "review" | "done"
-  description?: string
-  assignee?: {
-    name: string
-    avatar?: string
-    initials: string
-  }
-  created: string
-  updated: string
-}
+import type { Task, TaskPriority, TaskStatus } from "@/types/task"
 
 interface User {
   id: number;
@@ -144,7 +129,7 @@ export function TaskDetail({ task, onBack }: TaskDetailProps) {
       .toUpperCase()
   }
 
-  const getPriorityColor = (priority: Task["priority"]) => {
+  const getPriorityColor = (priority: TaskPriority) => {
     switch (priority) {
       case "highest":
         return "bg-red-100 text-[#C74634]"
@@ -159,7 +144,7 @@ export function TaskDetail({ task, onBack }: TaskDetailProps) {
     }
   }
 
-  const getStatusColor = (status: Task["status"]) => {
+  const getStatusColor = (status: TaskStatus) => {
     switch (status) {
       case "todo":
         return "bg-gray-100 text-[#3A3A3A]"
@@ -169,10 +154,14 @@ export function TaskDetail({ task, onBack }: TaskDetailProps) {
         return "bg-gray-200 text-[#707070]"
       case "done":
         return "bg-green-100 text-green-700"
+      case "blocked":
+        return "bg-red-100 text-red-700"
+      case "cancelled":
+        return "bg-gray-300 text-gray-700"
     }
   }
 
-  const getPriorityId = (priority: Task["priority"]): number => {
+  const getPriorityId = (priority: TaskPriority): number => {
     switch (priority) {
       case "highest": return 1
       case "high": return 2
@@ -183,43 +172,42 @@ export function TaskDetail({ task, onBack }: TaskDetailProps) {
     }
   }
 
-  const getStatusId = (status: string): number => {
+  const getStatusId = (status: TaskStatus): number => {
     switch (status) {
       case 'todo': return 3
       case 'inProgress': return 1
       case 'review': return 4
       case 'done': return 6
+      case 'blocked': return 5
+      case 'cancelled': return 7
       default: return 3
     }
   }
 
   return (
-    <div className="space-y-6">
-      <Button variant="outline" onClick={onBack} className="mb-4">
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Backlog
+    <div className="container mx-auto py-6">
+      <Button variant="outline" onClick={onBack} className="flex items-center gap-2 mb-6">
+        <ArrowLeft className="h-4 w-4" />
+        Back
       </Button>
+
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-2xl">
+        <CardContent className="pt-8 pb-6 px-6">
+          {error && <div className="text-red-500 mb-2">{error}</div>}
+          <div className="mb-6">
+            <p className="text-sm text-gray-500 mb-1">Title</p>
             {isEditing ? (
               <input
-                className="border rounded px-2 py-1 w-full"
+                className="font-medium text-[#3A3A3A] bg-gray-50 border border-gray-200 rounded px-3 py-2 w-full focus:outline-none focus:border-blue-400 transition"
                 value={editedTask.title}
                 onChange={e => setEditedTask({ ...editedTask, title: e.target.value })}
+                maxLength={100}
+                autoFocus
               />
             ) : (
-              task.title
+              <p className="font-medium text-[#3A3A3A] bg-gray-50 border border-gray-200 rounded px-3 py-2 w-full">{task.title}</p>
             )}
-          </CardTitle>
-          {!isEditing && (
-            <Button onClick={() => setIsEditing(true)} variant="secondary">
-              Editar
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent>
-          {error && <div className="text-red-500 mb-2">{error}</div>}
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
               <p className="text-sm text-gray-500 mb-1">ID</p>
@@ -248,7 +236,7 @@ export function TaskDetail({ task, onBack }: TaskDetailProps) {
                 <select
                   className="border rounded px-2 py-1"
                   value={editedTask.priority}
-                  onChange={e => setEditedTask({ ...editedTask, priority: e.target.value as Task["priority"] })}
+                  onChange={e => setEditedTask({ ...editedTask, priority: e.target.value as TaskPriority })}
                 >
                   <option value="highest">Highest</option>
                   <option value="high">High</option>
@@ -268,12 +256,14 @@ export function TaskDetail({ task, onBack }: TaskDetailProps) {
                 <select
                   className="border rounded px-2 py-1"
                   value={editedTask.status}
-                  onChange={e => setEditedTask({ ...editedTask, status: e.target.value as Task["status"] })}
+                  onChange={e => setEditedTask({ ...editedTask, status: e.target.value as TaskStatus })}
                 >
                   <option value="todo">To Do</option>
                   <option value="inProgress">In Progress</option>
                   <option value="review">Review</option>
                   <option value="done">Done</option>
+                  <option value="blocked">Blocked</option>
+                  <option value="cancelled">Cancelled</option>
                 </select>
               ) : (
                 <Badge className={getStatusColor(task.status)}>
@@ -285,12 +275,12 @@ export function TaskDetail({ task, onBack }: TaskDetailProps) {
               <p className="text-sm text-gray-500 mb-1">Description</p>
               {isEditing ? (
                 <textarea
-                  className="border rounded px-2 py-1 w-full"
+                  className="font-medium text-[#3A3A3A] bg-gray-50 border border-gray-200 rounded px-3 py-2 w-full focus:outline-none focus:border-blue-400 transition"
                   value={editedTask.description}
                   onChange={e => setEditedTask({ ...editedTask, description: e.target.value })}
                 />
               ) : (
-                <p className="font-medium">{task.description || <span className="text-gray-400">No description</span>}</p>
+                <p className="font-medium text-[#3A3A3A] bg-gray-50 border border-gray-200 rounded px-3 py-2 w-full">{task.description || <span className="text-gray-400">No description</span>}</p>
               )}
             </div>
             <div>
@@ -345,16 +335,21 @@ export function TaskDetail({ task, onBack }: TaskDetailProps) {
               <p className="text-sm text-gray-500">{task.updated}</p>
             </div>
           </div>
-          {isEditing && (
-            <div className="flex gap-2 mt-4">
-              <Button onClick={handleSave} disabled={saving} className="bg-[#C74634] hover:bg-[#b03d2e]">
-                {saving ? "Guardando..." : "Guardar"}
-              </Button>
-              <Button variant="outline" onClick={() => { setIsEditing(false); setEditedTask(task); }}>
-                Cancelar
-              </Button>
-            </div>
-          )}
+
+          <div className="flex justify-end gap-2">
+            {isEditing ? (
+              <>
+                <Button variant="outline" onClick={() => setIsEditing(false)} disabled={saving}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSave} disabled={saving}>
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </>
+            ) : (
+              <Button onClick={() => setIsEditing(true)}>Edit Task</Button>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

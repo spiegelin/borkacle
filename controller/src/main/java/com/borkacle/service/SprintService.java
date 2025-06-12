@@ -36,7 +36,7 @@ public class SprintService {
 
     // Decide if getActiveSprints logic is needed for API
     public List<Sprint> getActiveSprints() {
-        return sprintRepository.findByEstado("ACTIVE");
+        return sprintRepository.findByEstado("Activo");
     }
 
     // Decide if create/update/delete sprint logic belongs here or in a dedicated Admin/Sprint controller
@@ -45,7 +45,7 @@ public class SprintService {
         sprint.setNombre(nombre);
         sprint.setFechaInicio(fechaInicio);
         sprint.setFechaFin(fechaFin);
-        sprint.setEstado("ACTIVE"); // Default state
+        sprint.setEstado("Activo"); // Default state
         return sprintRepository.save(sprint);
     }
 

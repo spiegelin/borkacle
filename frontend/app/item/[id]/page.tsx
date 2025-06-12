@@ -59,7 +59,7 @@ export default function ItemPage() {
   if (!item) {
     return (
       <div className="container mx-auto py-6">
-        <Link href="/" passHref>
+        <Link href="/dashboard" passHref>
           <Button variant="outline" className="mb-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
@@ -91,7 +91,7 @@ export default function ItemPage() {
   return (
     <div className="space-y-4">
       <div className="container mx-auto py-6">
-        <Link href="/" passHref>
+        <Link href="/dashboard" passHref>
           <Button variant="outline" className="mb-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard

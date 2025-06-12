@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Search, Filter, ArrowUpDown, MoreHorizontal, AlertCircle, CheckCircle2, Clock } from "lucide-react"
+import { Plus, Search, Filter, ArrowUpDown, MoreHorizontal, AlertCircle, CheckCircle2, Clock, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -12,21 +12,19 @@ import { useRouter } from "next/navigation"
 import api from "@/lib/api"
 import { SprintDetail } from "@/components/project/SprintDetail"
 import { TaskDetail } from "@/components/project/TaskDetail"
+import type { Task, TaskPriority, TaskStatus } from "@/types/task"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-interface Task {
+interface Sprint {
   id: string
-  title: string
-  type: "bug" | "task" | "story" | "epic"
-  priority: "highest" | "high" | "medium" | "low" | "lowest"
-  status: "todo" | "inProgress" | "review" | "done"
-  description?: string
-  assignee?: {
-    name: string
-    avatar?: string
-    initials: string
-  }
-  created: string
-  updated: string
+  name: string
+  startDate: string
+  endDate: string
+  status: "active" | "completed" | "planned"
+}
+
+interface SprintWithTasks extends Sprint {
+  tasks: Task[]
 }
 
 export function Backlog() {
@@ -115,7 +113,7 @@ export function Backlog() {
     }
   }
 
-  const mapPriority = (prioridadId: number): Task['priority'] => {
+  const mapPriority = (prioridadId: number): TaskPriority => {
     switch (prioridadId) {
       case 1: return 'highest'
       case 2: return 'high'
@@ -126,13 +124,14 @@ export function Backlog() {
     }
   }
 
-  const mapStatus = (statusId: number): Task["status"] => {
-    // Map your status IDs to the corresponding status values
+  const mapStatus = (statusId: number): TaskStatus => {
     switch (statusId) {
-      case 1: return "todo"
-      case 2: return "inProgress"
-      case 3: return "review"
+      case 1: return "inProgress"
+      case 2: return "review"
+      case 3: return "todo"
       case 4: return "done"
+      case 5: return "blocked"
+      case 6: return "cancelled"
       default: return "todo"
     }
   }

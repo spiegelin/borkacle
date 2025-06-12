@@ -7,7 +7,7 @@ export default function ProfileSettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/" passHref>
+        <Link href="/dashboard" passHref>
           <Button variant="outline" className="mb-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard

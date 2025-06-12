@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
+import image from "@/public/oracle.jpg"
 
 export default function LandingPage() {
   return (
@@ -16,10 +17,10 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center gap-4">
             <Link href="/login" passHref>
-              <Button variant="outline">Log In</Button>
+              <Button variant="outline">Iniciar Sesión</Button>
             </Link>
             <Link href="/signup" passHref>
-              <Button className="bg-[#C74634] hover:bg-[#b03d2e]">Sign Up</Button>
+              <Button className="bg-[#C74634] hover:bg-[#b03d2e]">Registrarse</Button>
             </Link>
           </div>
         </div>
@@ -31,22 +32,21 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row items-center gap-12">
             <div className="md:w-1/2 space-y-6">
               <h1 className="text-4xl md:text-5xl font-bold text-[#3A3A3A] leading-tight">
-                Manage your projects with ease using Oracle Cloud Tasks
+                Gestiona tus proyectos con facilidad usando Oracle Cloud Tasks
               </h1>
               <p className="text-lg text-gray-600">
-                A powerful project management tool designed for teams to track tasks, manage sprints, and deliver
-                projects on time. a ver
+                Una potente herramienta de gestión de proyectos diseñada para que los equipos realicen seguimiento de tareas, gestionen sprints y entreguen proyectos a tiempo.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/signup" passHref>
                   <Button size="lg" className="bg-[#C74634] hover:bg-[#b03d2e]">
-                    Get Started
+                    Comenzar
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
                 <Link href="#features" passHref>
                   <Button size="lg" variant="outline">
-                    View Demo
+                    Ver Demo
                   </Button>
                 </Link>
               </div>
@@ -54,8 +54,8 @@ export default function LandingPage() {
             <div className="md:w-1/2">
               <div className="bg-white rounded-lg shadow-xl overflow-hidden border border-gray-200">
                 <img
-                  src="/placeholder.svg?height=400&width=600"
-                  alt="Oracle Cloud Tasks Dashboard"
+                  src={image.src}
+                  alt="Panel de Control de Oracle Cloud Tasks"
                   className="w-full h-auto"
                 />
               </div>
@@ -68,9 +68,9 @@ export default function LandingPage() {
       <section id="features" className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-[#3A3A3A]">Powerful Features for Your Team</h2>
+            <h2 className="text-3xl font-bold text-[#3A3A3A]">Características Potentes para tu Equipo</h2>
             <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-              Everything you need to manage projects, track progress, and collaborate with your team.
+              Todo lo que necesitas para gestionar proyectos, hacer seguimiento del progreso y colaborar con tu equipo.
             </p>
           </div>
 
@@ -95,9 +95,9 @@ export default function LandingPage() {
                   <rect width="7" height="5" x="3" y="16" rx="1" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-[#3A3A3A] mb-2">Kanban Board</h3>
+              <h3 className="text-xl font-semibold text-[#3A3A3A] mb-2">Tablero Kanban</h3>
               <p className="text-gray-600">
-                Visualize your workflow with customizable boards. Drag and drop tasks to update their status.
+                Visualiza tu flujo de trabajo con tableros personalizables. Arrastra y suelta tareas para actualizar su estado.
               </p>
             </div>
 
@@ -121,9 +121,9 @@ export default function LandingPage() {
                   <path d="M9 17H4v5" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-[#3A3A3A] mb-2">Sprint Management</h3>
+              <h3 className="text-xl font-semibold text-[#3A3A3A] mb-2">Gestión de Sprints</h3>
               <p className="text-gray-600">
-                Plan and track sprints with ease. Set goals, assign tasks, and monitor progress in real-time.
+                Planifica y realiza seguimiento de sprints con facilidad. Establece objetivos, asigna tareas y monitorea el progreso en tiempo real.
               </p>
             </div>
 
@@ -147,9 +147,9 @@ export default function LandingPage() {
                   <path d="M8 17v-3" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-[#3A3A3A] mb-2">Advanced Reporting</h3>
+              <h3 className="text-xl font-semibold text-[#3A3A3A] mb-2">Informes Avanzados</h3>
               <p className="text-gray-600">
-                Get insights into your team's performance with detailed reports and analytics.
+                Obtén información sobre el rendimiento de tu equipo con informes detallados y análisis.
               </p>
             </div>
           </div>
@@ -159,19 +159,19 @@ export default function LandingPage() {
       {/* CTA Section */}
       <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-[#3A3A3A] mb-6">Ready to streamline your project management?</h2>
+          <h2 className="text-3xl font-bold text-[#3A3A3A] mb-6">¿Listo para optimizar tu gestión de proyectos?</h2>
           <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-            Join thousands of teams that use Oracle Cloud Tasks to deliver projects on time and within budget.
+            Únete a miles de equipos que utilizan Oracle Cloud Tasks para entregar proyectos a tiempo y dentro del presupuesto.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup" passHref>
               <Button size="lg" className="bg-[#C74634] hover:bg-[#b03d2e]">
-                Start Free Trial
+                Prueba Gratuita
               </Button>
             </Link>
             <Link href="/login" passHref>
               <Button size="lg" variant="outline">
-                Login
+                Iniciar Sesión
               </Button>
             </Link>
           </div>
@@ -190,46 +190,45 @@ export default function LandingPage() {
                 <div className="font-semibold text-white">Oracle Cloud Tasks</div>
               </div>
               <p className="text-gray-300">
-                A powerful project management tool designed for teams to track tasks, manage sprints, and deliver
-                projects on time.
+                Una potente herramienta de gestión de proyectos diseñada para que los equipos realicen seguimiento de tareas, gestionen sprints y entreguen proyectos a tiempo.
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-lg mb-4">Product</h3>
+              <h3 className="font-semibold text-lg mb-4">Producto</h3>
               <ul className="space-y-2">
                 <li>
                   <a href="#features" className="text-gray-300 hover:text-white">
-                    Features
+                    Características
                   </a>
                 </li>
                 <li>
                   <a href="#" className="text-gray-300 hover:text-white">
-                    Pricing
+                    Precios
                   </a>
                 </li>
                 <li>
                   <a href="#" className="text-gray-300 hover:text-white">
-                    Integrations
+                    Integraciones
                   </a>
                 </li>
                 <li>
                   <a href="#" className="text-gray-300 hover:text-white">
-                    Roadmap
+                    Hoja de Ruta
                   </a>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold text-lg mb-4">Resources</h3>
+              <h3 className="font-semibold text-lg mb-4">Recursos</h3>
               <ul className="space-y-2">
                 <li>
                   <a href="#" className="text-gray-300 hover:text-white">
-                    Documentation
+                    Documentación
                   </a>
                 </li>
                 <li>
                   <a href="#" className="text-gray-300 hover:text-white">
-                    Tutorials
+                    Tutoriales
                   </a>
                 </li>
                 <li>
@@ -239,39 +238,39 @@ export default function LandingPage() {
                 </li>
                 <li>
                   <a href="#" className="text-gray-300 hover:text-white">
-                    Support
+                    Soporte
                   </a>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold text-lg mb-4">Company</h3>
+              <h3 className="font-semibold text-lg mb-4">Empresa</h3>
               <ul className="space-y-2">
                 <li>
                   <a href="#" className="text-gray-300 hover:text-white">
-                    About
+                    Acerca de
                   </a>
                 </li>
                 <li>
                   <a href="#" className="text-gray-300 hover:text-white">
-                    Careers
+                    Carreras
                   </a>
                 </li>
                 <li>
                   <a href="#" className="text-gray-300 hover:text-white">
-                    Press
+                    Prensa
                   </a>
                 </li>
                 <li>
                   <a href="#" className="text-gray-300 hover:text-white">
-                    Contact
+                    Contacto
                   </a>
                 </li>
               </ul>
             </div>
           </div>
           <div className="mt-12 pt-8 border-t border-gray-700 text-center text-gray-400 text-sm">
-            <p>&copy; 2023 Oracle Cloud Tasks. All rights reserved.</p>
+            <p>&copy; 2023 Oracle Cloud Tasks. Todos los derechos reservados.</p>
           </div>
         </div>
       </footer>

@@ -40,4 +40,7 @@ public interface TareaRepository extends JpaRepository<Tarea, Long> {
            "LEFT JOIN t.asignadoA u " +
            "ORDER BY t.fechaCreacion DESC")
     List<Object[]> findAllWithEstadoAndUser();
+
+    @Query("SELECT DISTINCT t FROM Tarea t LEFT JOIN FETCH t.asignadoA LEFT JOIN FETCH t.sprint LEFT JOIN FETCH t.estado")
+    List<Tarea> findAllWithRelations();
 } 

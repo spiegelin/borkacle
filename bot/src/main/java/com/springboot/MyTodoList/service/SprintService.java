@@ -26,7 +26,7 @@ public class SprintService {
     }
 
     public List<Sprint> getActiveSprints() {
-        return sprintRepository.findByEstado("ACTIVE");
+        return sprintRepository.findByEstado("Activo");
     }
 
     public Sprint createSprint(String nombre, LocalDate fechaInicio, LocalDate fechaFin) {
@@ -34,7 +34,7 @@ public class SprintService {
         sprint.setNombre(nombre);
         sprint.setFechaInicio(fechaInicio);
         sprint.setFechaFin(fechaFin);
-        sprint.setEstado("ACTIVE");
+        sprint.setEstado("Activo");
         return sprintRepository.save(sprint);
     }
 

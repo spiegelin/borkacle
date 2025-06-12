@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { Bell, ChevronDown, Search, SettingsIcon, User, Settings, LogOut } from "lucide-react"
+import { ChevronDown, SettingsIcon, User, Settings, LogOut } from "lucide-react"
 import {
   SidebarProvider,
   Sidebar,
@@ -18,11 +18,7 @@ import {
   SidebarGroupContent,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { NotificationsPanel } from "@/components/layout/NotificationsPanel"
-import { ProjectSelector } from "@/components/layout/ProjectSelector"
 import { UserProfileSettings } from "@/components/auth/UserProfileSettings"
 import Link from "next/link"
 import { useAuth } from "@/components/auth/AuthContext"
@@ -62,7 +58,6 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
               </div>
               <div className="font-semibold text-white">Oracle Cloud Tasks</div>
             </div>
-            <ProjectSelector />
           </SidebarHeader>
           <SidebarContent  className=" bg-[#312c2b]">
             <SidebarGroup>
@@ -266,31 +261,8 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
           <header className="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-4 lg:px-6">
             <div className="flex items-center gap-2">
               <SidebarTrigger />
-              <div className="relative w-64">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-white" />
-                <Input placeholder="Search issues" className="pl-8" />
-              </div>
             </div>
             <div className="flex items-center gap-4">
-              <div className="relative" onClick={(e) => e.stopPropagation()}>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="relative"
-                  onClick={() => {
-                    setNotificationsOpen(!notificationsOpen)
-                    setProfileOpen(false)
-                  }}
-                >
-                  <Bell className="h-5 w-5" />
-                  {notificationCount > 0 && (
-                    <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-[#C74634]">
-                      {notificationCount}
-                    </Badge>
-                  )}
-                </Button>
-                {notificationsOpen && <NotificationsPanel setNotificationCount={setNotificationCount} />}
-              </div>
               <div className="relative" onClick={(e) => e.stopPropagation()}>
                 <Button
                   variant="ghost"

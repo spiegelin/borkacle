@@ -95,9 +95,9 @@ export function Sprints() {
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case "active":
+      case "activo":
         return "bg-green-100 text-green-700"
-      case "planned":
+      case "inactivo":
         return "bg-gray-100 text-[#3A3A3A]"
       case "completed":
         return "bg-gray-200 text-[#707070]"
