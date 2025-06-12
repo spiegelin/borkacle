@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# List all the resources that Kustomize should manage.
+resources:
+  - bot-deployment.yaml
+  - controller-deployment.yaml
+  - frontend-deployment.yaml
+
+# This section will find all images with a matching name and update their tag.
+images:
+  - name: mx-queretaro-1.ocir.io/axtwc9mqbq4b/borkacle-bot
+    newTag: 1.0.7
+  - name: mx-queretaro-1.ocir.io/axtwc9mqbq4b/borkacle-controller
+    newTag: 1.0.7
+  - name: mx-queretaro-1.ocir.io/axtwc9mqbq4b/borkacle-frontend
+    newTag: 1.0.7

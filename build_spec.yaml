@@ -77,9 +77,11 @@ steps:
     name: Render Kubernetes YAMLs
     command: |
       source build_vars.env
-      sed "s|\${VERSION}|$VERSION|g" k8s/frontend-deployment.yaml > k8s/frontend-deployment.yaml
-      sed "s|\${VERSION}|$VERSION|g" k8s/bot-deployment.yaml > k8s/bot-deployment.yaml
-      sed "s|\${VERSION}|$VERSION|g" k8s/controller-deployment.yaml > k8s/controller-deployment.yaml
+      echo "📝 Rendering Kubernetes manifests with version $VERSION..."
+      sed -i "s|\${VERSION}|$VERSION|g" k8s/frontend-deployment.yaml
+      sed -i "s|\${VERSION}|$VERSION|g" k8s/bot-deployment.yaml
+      sed -i "s|\${VERSION}|$VERSION|g" k8s/controller-deployment.yaml
+      echo "✅ Manifests updated successfully."
 
   - type: Command
     name: Show Image URIs
