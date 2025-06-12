@@ -78,9 +78,9 @@ steps:
     command: |
       source build_vars.env
       echo "📝 Rendering Kubernetes manifests with version $VERSION..."
-      sed -i "s|\\${VERSION}|$VERSION|g" k8s/frontend-deployment.yaml
-      sed -i "s|\\${VERSION}|$VERSION|g" k8s/bot-deployment.yaml
-      sed -i "s|\\${VERSION}|$VERSION|g" k8s/controller-deployment.yaml
+      sed -i 's|${VERSION}|'"$VERSION"'|g' k8s/frontend-deployment.yaml
+      sed -i 's|${VERSION}|'"$VERSION"'|g' k8s/bot-deployment.yaml
+      sed -i 's|${VERSION}|'"$VERSION"'|g' k8s/controller-deployment.yaml
       echo "✅ Manifests updated successfully."
 
   - type: Command
@@ -89,20 +89,20 @@ steps:
     command: |
       # These variables must be configured in the Build Pipeline's settings in the OCI Console
       if [ -z "${REGION}" ] || [ -z "${OKE_CLUSTER_ID}" ]; then
-        echo "ERROR: OCI_REGION and OCI_OKE_CLUSTER_ID must be set."
+        echo "ERROR: REGION and OKE_CLUSTER_ID must be set."
         exit 1
       fi
 
       # Install required tools
-      echo "⬇️ Installing OCI CLI and kubectl...."
+      echo "⬇️ Installing OCI CLI and kubectl..."
       pip install --quiet oci-cli
       curl --silent --location -o kubectl https://storage.googleapis.com/kubernetes-release/release/v1.28.0/bin/linux/amd64/kubectl
       chmod +x kubectl
       mv kubectl /usr/local/bin/
 
-      # Configure kubectl to connect to your OKE cluster
+      # Configure kubectl to connect to your OKE cluster using the correct resource_principal auth
       echo "⚙️ Configuring kubeconfig for cluster..."
-      oci ce cluster create-kubeconfig --cluster-id "${OKE_CLUSTER_ID}" --file $HOME/.kube/config --region "${REGION}" --token-version 2.0.0 --auth build_principal
+      oci ce cluster create-kubeconfig --cluster-id "${OKE_CLUSTER_ID}" --file $HOME/.kube/config --region "${REGION}" --token-version 2.0.0 --auth resource_principal
 
       # Deploy all manifests
       echo "🚀 Applying Kubernetes manifests..."
