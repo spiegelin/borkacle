@@ -23,6 +23,8 @@ spec:
                 name: app-config
             - secretRef:
                 name: app-secrets
+          command: ["sh", "-c"]
+          args: ["mvn clean install && mvn -Doracle.net.wallet_location=/app/wallet spring-boot:run"]
           volumeMounts:
             - name: wallet-volume
               mountPath: /app/wallet
