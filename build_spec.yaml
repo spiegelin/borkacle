@@ -114,7 +114,7 @@ steps:
       kubectl apply -f k8s/controller-deployment.yaml
       kubectl apply -f k8s/frontend-deployment.yaml
 
-      echo "✅ Deployment complete."
+      echo "✅ Deployment complete :D"
 
   - type: Command
     name: Show Image URIs
