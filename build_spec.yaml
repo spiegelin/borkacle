@@ -91,6 +91,10 @@ steps:
       echo "⚙️ Configuring kubeconfig for cluster..."
       oci ce cluster create-kubeconfig --cluster-id "${OKE_CLUSTER_ID}" --file $HOME/.kube/config --region "${REGION}" --token-version 2.0.0 --auth resource_principal
 
+      # Create namespace if it doesn't exist
+      echo "Ensuring 'borkacle' namespace exists..."
+      kubectl create namespace borkacle || true
+
       # Deploy all manifests
       echo "🚀 Applying Kubernetes manifests..."
       kubectl apply -f k8s/app-config.yaml
