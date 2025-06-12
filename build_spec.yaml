@@ -34,7 +34,7 @@ steps:
     name: Build & Push Frontend
     command: |
       source build_vars.env
-      docker build --pull --no-cache \
+      docker build --pull --no-cache --platform linux/amd64 \
         -t ${REGISTRY}/${NAMESPACE}/${FRONTEND_REPO}:${VERSION} \
         ./frontend
 
@@ -44,7 +44,7 @@ steps:
     name: Build & Push Bot
     command: |
       source build_vars.env
-      docker build --pull --no-cache \
+      docker build --pull --no-cache --platform linux/amd64 \
         -t ${REGISTRY}/${NAMESPACE}/${BOT_REPO}:${VERSION} \
         ./bot
 
@@ -54,7 +54,7 @@ steps:
     name: Build & Push Controller
     command: |
       source build_vars.env
-      docker build --pull --no-cache \
+      docker build --pull --no-cache --platform linux/amd64 \
         -t ${REGISTRY}/${NAMESPACE}/${CONTROLLER_REPO}:${VERSION} \
         ./controller
 
@@ -76,7 +76,22 @@ steps:
     command: |
       # These variables must be configured in the Build Pipeline's settings in the OCI Console
       if [ -z "${REGION}" ] || [ -z "${OKE_CLUSTER_ID}" ]; then
-        echo "ERROR: REGION and OKE_CLUSTER_ID must be set."
+        echo "ERROR: REGION and OKE_CLUSTER_ID must be set as environment variables in the build pipeline."
+        exit 1
+      fi
+
+      # The following are application secrets. For security, they MUST be configured as secret
+      # parameters in the OCI Build Pipeline's settings, not stored in this file.
+      if [ -z "${DB_URL}" ] || \
+         [ -z "${DB_USERNAME}" ] || \
+         [ -z "${DB_PASSWORD}" ] || \
+         [ -z "${TRUST_STORE_PASSWORD}" ] || \
+         [ -z "${KEY_STORE_PASSWORD}" ] || \
+         [ -z "${TELEGRAM_BOT_TOKEN}" ] || \
+         [ -z "${TELEGRAM_BOT_NAME}" ] || \
+         [ -z "${JWT_SECRET}" ] || \
+         [ -z "${JWT_EXPIRATION_MS}" ]; then
+        echo "ERROR: All application secrets (DB_URL, DB_USERNAME, etc.) must be set as secret environment variables in the build pipeline."
         exit 1
       fi
 
@@ -94,6 +109,25 @@ steps:
       # Create namespace if it doesn't exist
       echo "Ensuring 'borkacle' namespace exists..."
       kubectl create namespace borkacle || true
+
+      # Create or update application secrets. Values are sourced from secure pipeline variables.
+      echo "🔒 Creating/updating app-secrets Kubernetes secret..."
+      kubectl delete secret app-secrets -n borkacle --ignore-not-found=true
+      kubectl create secret generic app-secrets -n borkacle \
+        --from-literal=DB_URL="${DB_URL}" \
+        --from-literal=DB_USERNAME="${DB_USERNAME}" \
+        --from-literal=DB_PASSWORD="${DB_PASSWORD}" \
+        --from-literal=TRUST_STORE_PASSWORD="${TRUST_STORE_PASSWORD}" \
+        --from-literal=KEY_STORE_PASSWORD="${KEY_STORE_PASSWORD}" \
+        --from-literal=TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN}" \
+        --from-literal=TELEGRAM_BOT_NAME="${TELEGRAM_BOT_NAME}" \
+        --from-literal=JWT_SECRET="${JWT_SECRET}" \
+        --from-literal=JWT_EXPIRATION_MS="${JWT_EXPIRATION_MS}"
+
+      # Create/update wallet secret from the wallet directory
+      echo "🔑 Creating/updating wallet secret..."
+      kubectl delete secret wallet-secret -n borkacle --ignore-not-found=true
+      kubectl create secret generic wallet-secret -n borkacle --from-file=./wallet
 
       # Deploy all manifests
       echo "🚀 Applying Kubernetes manifests..."

@@ -11,3 +11,6 @@ node_modules/
 wallet.zip
 test.sh
 results/
+env.sh
+# Local Environment Variables
+env.local.sh
