@@ -93,7 +93,7 @@ export function CreateTaskDialog({ open, onOpenChange, onCreateTask, sprintId }:
         prioridadId: selectedPriority?.id || 3 // Default to medium priority
       }
 
-      const response = await api.post('http://127.0.0.1:8080/api/tasks', taskData)
+      const response = await api.post('/api/tasks', taskData)
       const newTask: Task = {
         id: response.data.id,
         title: response.data.titulo,
@@ -127,29 +127,29 @@ export function CreateTaskDialog({ open, onOpenChange, onCreateTask, sprintId }:
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create Task</DialogTitle>
+          <DialogTitle>Crear Tarea</DialogTitle>
           <DialogDescription>
-            Add a new task to the project. Fill in the details below.
+            Agregar una nueva tarea al proyecto. Complete los detalles a continuación.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="title" className="text-right">
-                Title
+                Título
               </Label>
               <Input
                 id="title"
                 value={taskTitle}
                 onChange={(e) => setTaskTitle(e.target.value)}
                 className="col-span-3"
-                placeholder="Enter task title"
+                placeholder="Ingrese el título de la tarea"
                 required
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="type" className="text-right">
-                Type
+                Tipo
               </Label>
               <Select 
                 value={taskType} 
@@ -157,19 +157,19 @@ export function CreateTaskDialog({ open, onOpenChange, onCreateTask, sprintId }:
                 defaultValue="task"
               >
                 <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select task type" />
+                  <SelectValue placeholder="Seleccione el tipo de tarea" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="task">Task</SelectItem>
-                  <SelectItem value="bug">Bug</SelectItem>
-                  <SelectItem value="story">Story</SelectItem>
-                  <SelectItem value="epic">Epic</SelectItem>
+                  <SelectItem value="task">Tarea</SelectItem>
+                  <SelectItem value="bug">Error</SelectItem>
+                  <SelectItem value="story">Historia</SelectItem>
+                  <SelectItem value="epic">Épica</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="priority" className="text-right">
-                Priority
+                Prioridad
               </Label>
               <Select 
                 value={priority} 
@@ -177,7 +177,7 @@ export function CreateTaskDialog({ open, onOpenChange, onCreateTask, sprintId }:
                 defaultValue="medium"
               >
                 <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select priority" />
+                  <SelectValue placeholder="Seleccione la prioridad" />
                 </SelectTrigger>
                 <SelectContent>
                   {priorities.map((priority) => (
@@ -190,28 +190,28 @@ export function CreateTaskDialog({ open, onOpenChange, onCreateTask, sprintId }:
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="description" className="text-right">
-                Description
+                Descripción
               </Label>
               <Textarea
                 id="description"
                 value={taskDescription}
                 onChange={(e) => setTaskDescription(e.target.value)}
                 className="col-span-3"
-                placeholder="Enter task description"
+                placeholder="Ingrese la descripción de la tarea"
               />
             </div>
           </div>
           {error && <div className="text-red-500 mb-4">{error}</div>}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              Cancelar
             </Button>
             <Button 
               type="submit"
               className="bg-[#C74634] hover:bg-[#b03d2e]"
               disabled={isSubmitting || !taskTitle.trim() || isLoading}
             >
-              {isSubmitting ? 'Creating...' : 'Create Task'}
+              {isSubmitting ? 'Creando...' : 'Crear Tarea'}
             </Button>
           </DialogFooter>
         </form>

@@ -61,7 +61,7 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
           </SidebarHeader>
           <SidebarContent  className=" bg-[#312c2b]">
             <SidebarGroup>
-              <SidebarGroupLabel className="font-semibold text-white">Planning</SidebarGroupLabel>
+              <SidebarGroupLabel className="font-semibold text-white">Planificación</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   <SidebarMenuItem className="font-semibold text-white">
@@ -83,7 +83,7 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
                         <rect width="7" height="9" x="14" y="12" rx="1" />
                         <rect width="7" height="5" x="3" y="16" rx="1" />
                       </svg>
-                      <span>Board</span>
+                      <span>Tablero</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem className="font-semibold text-white">
@@ -106,7 +106,7 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
                         <path d="M13 12h8" />
                         <path d="M13 18h8" />
                       </svg>
-                      <span>Backlog</span>
+                      <span>Pendientes</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem className="font-semibold text-white">
@@ -136,7 +136,7 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
             </SidebarGroup>
 
             <SidebarGroup>
-              <SidebarGroupLabel className="font-semibold text-white">Insights</SidebarGroupLabel>
+              <SidebarGroupLabel className="font-semibold text-white">Análisis</SidebarGroupLabel>
               <SidebarGroupContent className="font-semibold text-white">
                 <SidebarMenu>
                   <SidebarMenuItem>
@@ -158,7 +158,7 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
                         <path d="M13 17V5" />
                         <path d="M8 17v-3" />
                       </svg>
-                      <span>Reports</span>
+                      <span>Reportes</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   
@@ -249,7 +249,7 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
                 <Link href="/profile-settings" passHref>
                   <SidebarMenuButton>
                     <SettingsIcon className="h-4 w-4" />
-                    <span>Settings</span>
+                    <span>Configuración</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
@@ -273,7 +273,7 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
                   }}
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="/placeholder-user.jpg" alt="User" />
+                    <AvatarImage src="/placeholder-user.jpg" alt="Usuario" />
                     <AvatarFallback className="bg-[#3A3A3A] text-white">
                       {user?.nombre ? user.nombre.charAt(0) : 'U'}
                     </AvatarFallback>
@@ -287,13 +287,13 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
                       <Link href="/profile-settings" passHref>
                         <Button variant="ghost" className="w-full justify-start text-sm">
                           <User className="h-4 w-4 mr-2" />
-                          Your profile
+                          Tu perfil
                         </Button>
                       </Link>
                       <Link href="/profile-settings" passHref>
                         <Button variant="ghost" className="w-full justify-start text-sm">
                           <Settings className="h-4 w-4 mr-2" />
-                          Personal settings
+                          Configuración personal
                         </Button>
                       </Link>
                       <Button 
