@@ -18,7 +18,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy
 } from "@dnd-kit/sortable"
-import { Plus, MoreHorizontal, AlertCircle, CheckCircle2, Clock, ArrowUpRight } from "lucide-react"
+import { Plus, MoreHorizontal, AlertCircle, CheckCircle2, Clock, ArrowUpRight, Loader2 } from "lucide-react"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
@@ -309,9 +309,9 @@ export function TaskBoard() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-          <span className="ml-2 text-gray-600">Cargando tareas...</span>
+        <div className="flex flex-col items-center justify-center h-96">
+          <Loader2 className="h-8 w-8 animate-spin text-[#C74634] mb-2" />
+          <span className="text-gray-500">Cargando tareas...</span>
         </div>
       ) : error ? (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6">

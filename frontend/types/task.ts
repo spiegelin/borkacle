@@ -11,11 +11,20 @@ export interface TaskAssignee {
 export interface Task {
   id: string
   title: string
+  titulo?: string
   type: TaskType
   priority: TaskPriority
   status: TaskStatus
   description?: string
+  descripcion?: string
   assignee?: TaskAssignee
   created: string
   updated: string
+  fechaCreacion?: string
+  fechaActualizacion?: string
+  tiempoEstimado?: number
+  tiempoReal?: number
+  proyectoId?: number
+  sprintId?: number
+  sprint?: string
 } 

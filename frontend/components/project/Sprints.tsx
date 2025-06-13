@@ -112,7 +112,7 @@ export function Sprints() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-[#3A3A3A]">Sprints</h1>
-            <p className="text-gray-500">Loading sprints...</p>
+            <p className="text-gray-500">Cargando sprints...</p>
           </div>
         </div>
       </div>
@@ -137,13 +137,13 @@ export function Sprints() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[#3A3A3A]">Sprints</h1>
-          <p className="text-gray-500">Manage your project sprints</p>
+          <p className="text-gray-500">Gestiona los sprints de tu proyecto</p>
         </div>
         <Button 
           className="bg-[#C74634] hover:bg-[#b03d2e]"
           onClick={() => setCreateSprintOpen(true)}
         >
-          <Plus className="h-4 w-4 mr-1" /> Create Sprint
+          <Plus className="h-4 w-4 mr-1" /> Crear Sprint
         </Button>
       </div>
 
@@ -194,35 +194,35 @@ export function Sprints() {
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4 text-gray-500" />
                         <div>
-                          <p className="text-sm text-gray-500">Total Tasks</p>
+                          <p className="text-sm text-gray-500">Tareas totales</p>
                           <p className="font-medium">{sprint.tasks.total}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <CheckCircle className="h-4 w-4 text-green-500" />
                         <div>
-                          <p className="text-sm text-gray-500">Completed</p>
+                          <p className="text-sm text-gray-500">Completadas</p>
                           <p className="font-medium">{sprint.tasks.completed}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4 text-orange-500" />
                         <div>
-                          <p className="text-sm text-gray-500">In Progress</p>
+                          <p className="text-sm text-gray-500">En progreso</p>
                           <p className="font-medium">{sprint.tasks.inProgress}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4 text-gray-500" />
                         <div>
-                          <p className="text-sm text-gray-500">To Do</p>
+                          <p className="text-sm text-gray-500">Pendientes</p>
                           <p className="font-medium">{sprint.tasks.todo}</p>
                         </div>
                       </div>
                     </div>
                     <div className="mt-4 space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span>Progress</span>
+                        <span>Progreso</span>
                         <span>
                           {sprint.tasks.total > 0
                             ? Math.round((sprint.tasks.completed / sprint.tasks.total) * 100)
@@ -285,7 +285,7 @@ export function Sprints() {
                             setSelectedSprint(sprint)
                           }}
                         >
-                          View Details
+                          Ver detalles
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

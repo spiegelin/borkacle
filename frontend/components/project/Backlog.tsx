@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Search, Filter, ArrowUpDown, MoreHorizontal, AlertCircle, CheckCircle2, Clock, ArrowLeft } from "lucide-react"
+import { Plus, Search, Filter, ArrowUpDown, MoreHorizontal, AlertCircle, CheckCircle2, Clock, ArrowLeft, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -36,6 +36,7 @@ export function Backlog() {
   const [selectedSprintId, setSelectedSprintId] = useState<string | null>(null)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [shouldRefresh, setShouldRefresh] = useState(false)
+  const [loadingDetail, setLoadingDetail] = useState(false)
 
   useEffect(() => {
     fetchTasks()
@@ -64,75 +65,70 @@ export function Backlog() {
     try {
       setLoading(true)
       setError(null)
-      const response = await api.get('/api/tareas/board')
+      const response = await api.get('/api/tasks')
       const data = response.data
       
       console.log('API Response:', data)
       
-      const allTasks: Task[] = []
-      
-      Object.entries(data.columns || {}).forEach(([columnKey, columnTasks]: [string, any]) => {
-        if (Array.isArray(columnTasks)) {
-          columnTasks.forEach((task: any) => {
-            console.log('Task data:', task)
-            allTasks.push({
-              id: String(task.id || ''),
-              title: task.titulo || task.title || '',
-              type: mapTaskType(task.tipo || task.type) as Task['type'],
-              priority: mapPriority(task.prioridadId || task.priorityId) || 'medium',
-              status: columnKey as Task['status'],
-              description: task.descripcion || task.description || '',
-              assignee: task.asignadoA || task.assignee ? {
-                name: (task.asignadoA?.nombre || task.assignee?.name || ''),
-                avatar: (task.asignadoA?.avatar || task.assignee?.avatar),
-                initials: getInitials(task.asignadoA?.nombre || task.assignee?.name || '')
-              } : undefined,
-              created: formatDate(task.fechaCreacion || task.created),
-              updated: formatDate(task.fechaActualizacion || task.updated || task.fechaCreacion || task.created)
-            })
-          })
-        }
-      })
+      const allTasks: Task[] = data.map((task: any) => ({
+        id: String(task.id),
+        title: task.titulo,
+        type: 'task', // Por defecto, ya que no viene en la API
+        priority: mapPriorityFromText(task.prioridad),
+        status: mapStatusFromText(task.estado),
+        description: task.descripcion || '',
+        descripcion: task.descripcion || '',
+        assignee: task.asignadoA ? {
+          name: task.asignadoA,
+          initials: getInitials(task.asignadoA)
+        } : undefined,
+        created: formatDate(task.fechaCreacion),
+        updated: formatDate(task.fechaCreacion) // Usando fechaCreacion como updated ya que no viene en la API
+      }))
       
       console.log('Mapped tasks:', allTasks)
       setTasks(allTasks)
     } catch (err) {
       console.error("Error fetching tasks:", err)
-      setError("Failed to load tasks. Please try again later.")
+      setError("Error al cargar las tareas. Por favor, intente nuevamente.")
     } finally {
       setLoading(false)
     }
   }
 
-  const mapTaskType = (tipo: string): Task['type'] => {
-    switch (tipo?.toLowerCase()) {
-      case 'bug': return 'bug'
-      case 'story': return 'story'
-      case 'epic': return 'epic'
-      default: return 'task'
+  const mapPriorityFromText = (prioridad: string): TaskPriority => {
+    switch (prioridad?.toLowerCase()) {
+      case 'crítica':
+        return 'highest'
+      case 'alta':
+        return 'high'
+      case 'media':
+        return 'medium'
+      case 'baja':
+        return 'low'
+      case 'trivial':
+        return 'lowest'
+      default:
+        return 'medium'
     }
   }
 
-  const mapPriority = (prioridadId: number): TaskPriority => {
-    switch (prioridadId) {
-      case 1: return 'highest'
-      case 2: return 'high'
-      case 3: return 'medium'
-      case 4: return 'low'
-      case 5: return 'lowest'
-      default: return 'medium'
-    }
-  }
-
-  const mapStatus = (statusId: number): TaskStatus => {
-    switch (statusId) {
-      case 1: return "inProgress"
-      case 2: return "review"
-      case 3: return "todo"
-      case 4: return "done"
-      case 5: return "blocked"
-      case 6: return "cancelled"
-      default: return "todo"
+  const mapStatusFromText = (estado: string): TaskStatus => {
+    switch (estado?.toLowerCase()) {
+      case 'en proceso':
+        return 'inProgress'
+      case 'completado':
+        return 'done'
+      case 'pendiente':
+        return 'todo'
+      case 'en revisión':
+        return 'review'
+      case 'bloqueado':
+        return 'blocked'
+      case 'cancelado':
+        return 'cancelled'
+      default:
+        return 'todo'
     }
   }
 
@@ -144,9 +140,32 @@ export function Backlog() {
       .toUpperCase()
   }
 
-  const handleRowClick = (taskId: string) => {
-    const task = tasks.find(t => t.id === taskId)
-    if (task) setSelectedTask(task)
+  const handleRowClick = async (taskId: string) => {
+    setLoadingDetail(true)
+    try {
+      const response = await api.get(`/api/tasks/${taskId}`);
+      const data = response.data;
+      setSelectedTask({
+        ...data,
+        id: String(data.id),
+        title: data.titulo,
+        type: 'task',
+        priority: mapPriorityFromText(data.prioridad),
+        status: mapStatusFromText(data.estado),
+        description: data.descripcion || '',
+        descripcion: data.descripcion || '',
+        assignee: data.asignadoA ? {
+          name: data.asignadoA,
+          initials: getInitials(data.asignadoA)
+        } : undefined,
+        created: formatDate(data.fechaCreacion),
+        updated: formatDate(data.fechaActualizacion)
+      });
+    } catch (err) {
+      console.error('Error fetching task detail:', err);
+    } finally {
+      setLoadingDetail(false)
+    }
   }
 
   const handleCreateTask = async (newTask: Task) => {
@@ -257,12 +276,67 @@ export function Backlog() {
     }
   }
 
+  const getStatusText = (status: Task["status"]): string => {
+    switch (status) {
+      case "todo":
+        return "Pendiente"
+      case "inProgress":
+        return "En progreso"
+      case "review":
+        return "En revisión"
+      case "done":
+        return "Completado"
+      default:
+        return status
+    }
+  }
+
+  const getPriorityText = (priority: Task["priority"]): string => {
+    switch (priority) {
+      case "highest":
+        return "Máxima"
+      case "high":
+        return "Alta"
+      case "medium":
+        return "Media"
+      case "low":
+        return "Baja"
+      case "lowest":
+        return "Mínima"
+      default:
+        return priority
+    }
+  }
+
+  const getTypeText = (type: Task["type"]): string => {
+    switch (type) {
+      case "bug":
+        return "Error"
+      case "task":
+        return "Tarea"
+      case "story":
+        return "Historia"
+      case "epic":
+        return "Épica"
+      default:
+        return type
+    }
+  }
+
   const handleBackFromTaskDetail = () => {
     setSelectedTask(null)
     setShouldRefresh(true)
   }
 
   if (selectedTask) {
+    if (loadingDetail) {
+      return (
+        <div className="flex flex-col items-center justify-center h-96">
+          <Loader2 className="h-8 w-8 animate-spin text-[#C74634] mb-2" />
+          <span className="text-gray-500">Cargando detalle de la tarea...</span>
+        </div>
+      )
+    }
     return (
       <TaskDetail
         task={selectedTask}
@@ -286,7 +360,7 @@ export function Backlog() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-[#3A3A3A]">Backlog</h1>
-            <p className="text-gray-500">Loading tasks...</p>
+            <p className="text-gray-500">Cargando tareas...</p>
           </div>
         </div>
       </div>
@@ -299,7 +373,7 @@ export function Backlog() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-[#3A3A3A]">Backlog</h1>
-            <p className="text-red-500">{error}</p>
+            <p className="text-red-500">Error al cargar las tareas. Por favor, intente nuevamente.</p>
           </div>
         </div>
       </div>
@@ -311,23 +385,23 @@ export function Backlog() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[#3A3A3A]">Backlog</h1>
-          <p className="text-gray-500">Enterprise Cloud Migration</p>
+          <p className="text-gray-500">Migración a la Nube Empresarial</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Input
-              placeholder="Search tasks..."
+              placeholder="Buscar tareas..."
               className="w-[200px]"
               type="search"
             />
             <Button variant="outline" className="border-gray-200">
-              <Filter className="h-4 w-4 mr-1" /> Filter
+              <Filter className="h-4 w-4 mr-1" /> Filtrar
             </Button>
             <Button 
               className="bg-[#C74634] hover:bg-[#b03d2e]"
               onClick={() => setCreateTaskOpen(true)}
             >
-              <Plus className="h-4 w-4 mr-1" /> Create
+              <Plus className="h-4 w-4 mr-1" /> Crear
             </Button>
           </div>
         </div>
@@ -337,20 +411,20 @@ export function Backlog() {
         <TableHeader>
           <TableRow>
             <TableHead className="w-[100px]">ID</TableHead>
-            <TableHead>Title</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Priority</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Assignee</TableHead>
+            <TableHead>Título</TableHead>
+            <TableHead>Tipo</TableHead>
+            <TableHead>Prioridad</TableHead>
+            <TableHead>Estado</TableHead>
+            <TableHead>Asignado a</TableHead>
             <TableHead>
               <div className="flex items-center gap-1">
-                Created
+                Creado
                 <ArrowUpDown className="h-3 w-3" />
               </div>
             </TableHead>
             <TableHead>
               <div className="flex items-center gap-1">
-                Updated
+                Actualizado
                 <ArrowUpDown className="h-3 w-3" />
               </div>
             </TableHead>
@@ -369,17 +443,17 @@ export function Backlog() {
               <TableCell>
                 <div className="flex items-center gap-1">
                   {getTypeIcon(task.type)}
-                  <span className="text-sm">{task.type.charAt(0).toUpperCase() + task.type.slice(1)}</span>
+                  <span className="text-sm">{getTypeText(task.type)}</span>
                 </div>
               </TableCell>
               <TableCell>
                 <Badge className={getPriorityColor(task.priority)}>
-                  {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                  {getPriorityText(task.priority)}
                 </Badge>
               </TableCell>
               <TableCell>
                 <Badge className={getStatusColor(task.status)}>
-                  {task.status === "inProgress" ? "In Progress" : task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+                  {getStatusText(task.status)}
                 </Badge>
               </TableCell>
               <TableCell>
@@ -396,7 +470,7 @@ export function Backlog() {
                     <span className="text-sm">{task.assignee.name}</span>
                   </div>
                 ) : (
-                  <span className="text-sm text-gray-500">Unassigned</span>
+                  <span className="text-sm text-gray-500">Sin asignar</span>
                 )}
               </TableCell>
               <TableCell className="text-sm text-gray-500">{task.created}</TableCell>

@@ -106,7 +106,7 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
                         <path d="M13 12h8" />
                         <path d="M13 18h8" />
                       </svg>
-                      <span>Pendientes</span>
+                      <span>Backlog</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem className="font-semibold text-white">
@@ -139,6 +139,7 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
               <SidebarGroupLabel className="font-semibold text-white">Análisis</SidebarGroupLabel>
               <SidebarGroupContent className="font-semibold text-white">
                 <SidebarMenu>
+                  {/*
                   <SidebarMenuItem>
                     <SidebarMenuButton isActive={activeView === "reports"} onClick={() => setActiveView("reports")}>
                       <svg
@@ -161,6 +162,7 @@ export function DashboardLayout({ children, activeView, setActiveView }: Dashboa
                       <span>Reportes</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+                  */}
                   
                   <SidebarMenuItem>
                     <SidebarMenuButton isActive={activeView === "kpi-individual"} onClick={() => setActiveView("kpi-individual")}>

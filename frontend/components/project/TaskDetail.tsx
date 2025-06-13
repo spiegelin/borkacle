@@ -21,7 +21,14 @@ interface TaskDetailProps {
 
 export function TaskDetail({ task, onBack }: TaskDetailProps) {
   const [isEditing, setIsEditing] = useState(false)
-  const [editedTask, setEditedTask] = useState<Task>(task)
+  const [editedTask, setEditedTask] = useState<Task>({
+    ...task,
+    description: task.descripcion || task.description || '',
+    descripcion: task.descripcion || task.description || '',
+    title: task.titulo || task.title || '',
+    created: task.fechaCreacion || task.created,
+    updated: task.fechaActualizacion || task.updated
+  })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [users, setUsers] = useState<User[]>([])
@@ -30,6 +37,18 @@ export function TaskDetail({ task, onBack }: TaskDetailProps) {
   useEffect(() => {
     fetchUsers()
   }, [])
+
+  useEffect(() => {
+    console.log('Task updated:', task) // Debug log
+    setEditedTask({
+      ...task,
+      description: task.descripcion || task.description || '',
+      descripcion: task.descripcion || task.description || '',
+      title: task.titulo || task.title || '',
+      created: task.fechaCreacion || task.created,
+      updated: task.fechaActualizacion || task.updated
+    })
+  }, [task])
 
   const fetchUsers = async () => {
     try {
@@ -64,12 +83,11 @@ export function TaskDetail({ task, onBack }: TaskDetailProps) {
       }
       console.log('Saving task with numeric ID:', taskId)
       
-      // Get the selected user ID if a user is selected
       const selectedUser = users.find(u => u.nombre === editedTask.assignee?.name)
       
       const taskData = {
         titulo: editedTask.title,
-        descripcion: editedTask.description || '',
+        descripcion: editedTask.description,
         prioridadId: getPriorityId(editedTask.priority),
         estadoId: getStatusId(editedTask.status),
         tipo: editedTask.type,
@@ -77,25 +95,26 @@ export function TaskDetail({ task, onBack }: TaskDetailProps) {
         proyectoId: null,
         sprintId: null,
         tiempoReal: null,
-        userId: selectedUser?.id || null // Include the user ID in the main update
+        userId: selectedUser?.id || null
       }
       console.log('Task data being sent:', taskData)
       const response = await api.put(`/api/tasks/${taskId}`, taskData)
       console.log('API Response:', response.data)
       
-      // Update the task with the response data
       const updatedTask = {
         ...editedTask,
         title: response.data.titulo,
         description: response.data.descripcion,
+        descripcion: response.data.descripcion,
         type: response.data.tipo?.toLowerCase() || 'task',
-        priority: editedTask.priority, // Keep the frontend priority mapping
-        status: editedTask.status, // Keep the frontend status mapping
+        priority: editedTask.priority,
+        status: editedTask.status,
         assignee: response.data.asignadoA ? {
           name: response.data.asignadoA,
           initials: getInitials(response.data.asignadoA)
         } : undefined,
-        updated: new Date().toISOString()
+        updated: response.data.fechaActualizacion || new Date().toISOString(),
+        created: response.data.fechaCreacion || task.created
       }
       setEditedTask(updatedTask)
       setIsEditing(false)
@@ -105,7 +124,7 @@ export function TaskDetail({ task, onBack }: TaskDetailProps) {
       if (err.response) {
         console.error('Error response:', err.response.data)
       }
-      setError("Error updating task. Please try again.")
+      setError("Error al actualizar la tarea. Por favor, intente nuevamente.")
     } finally {
       setSaving(false)
     }
@@ -184,18 +203,51 @@ export function TaskDetail({ task, onBack }: TaskDetailProps) {
     }
   }
 
+  const getPriorityText = (priority: TaskPriority): string => {
+    switch (priority) {
+      case "highest": return "Máxima"
+      case "high": return "Alta"
+      case "medium": return "Media"
+      case "low": return "Baja"
+      case "lowest": return "Mínima"
+      default: return priority
+    }
+  }
+
+  const getStatusText = (status: TaskStatus): string => {
+    switch (status) {
+      case "todo": return "Pendiente"
+      case "inProgress": return "En progreso"
+      case "review": return "En revisión"
+      case "done": return "Completado"
+      case "blocked": return "Bloqueado"
+      case "cancelled": return "Cancelado"
+      default: return status
+    }
+  }
+
+  const getTypeText = (type: Task["type"]): string => {
+    switch (type) {
+      case "bug": return "Error"
+      case "task": return "Tarea"
+      case "story": return "Historia"
+      case "epic": return "Épica"
+      default: return type
+    }
+  }
+
   return (
     <div className="container mx-auto py-6">
       <Button variant="outline" onClick={onBack} className="flex items-center gap-2 mb-6">
         <ArrowLeft className="h-4 w-4" />
-        Back
+        Volver
       </Button>
 
       <Card>
         <CardContent className="pt-8 pb-6 px-6">
           {error && <div className="text-red-500 mb-2">{error}</div>}
           <div className="mb-6">
-            <p className="text-sm text-gray-500 mb-1">Title</p>
+            <p className="text-sm text-gray-500 mb-1">Título</p>
             {isEditing ? (
               <input
                 className="font-medium text-[#3A3A3A] bg-gray-50 border border-gray-200 rounded px-3 py-2 w-full focus:outline-none focus:border-blue-400 transition"
@@ -205,7 +257,7 @@ export function TaskDetail({ task, onBack }: TaskDetailProps) {
                 autoFocus
               />
             ) : (
-              <p className="font-medium text-[#3A3A3A] bg-gray-50 border border-gray-200 rounded px-3 py-2 w-full">{task.title}</p>
+              <p className="font-medium text-[#3A3A3A] bg-gray-50 border border-gray-200 rounded px-3 py-2 w-full">{editedTask.title}</p>
             )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -214,81 +266,83 @@ export function TaskDetail({ task, onBack }: TaskDetailProps) {
               <p className="font-medium">{task.id}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500 mb-1">Type</p>
+              <p className="text-sm text-gray-500 mb-1">Tipo</p>
               {isEditing ? (
                 <select
                   className="border rounded px-2 py-1"
                   value={editedTask.type}
                   onChange={e => setEditedTask({ ...editedTask, type: e.target.value as Task["type"] })}
                 >
-                  <option value="task">Task</option>
-                  <option value="bug">Bug</option>
-                  <option value="story">Story</option>
-                  <option value="epic">Epic</option>
+                  <option value="task">Tarea</option>
+                  <option value="bug">Error</option>
+                  <option value="story">Historia</option>
+                  <option value="epic">Épica</option>
                 </select>
               ) : (
-                <Badge variant="outline">{task.type.charAt(0).toUpperCase() + task.type.slice(1)}</Badge>
+                <Badge variant="outline">{getTypeText(task.type)}</Badge>
               )}
             </div>
             <div>
-              <p className="text-sm text-gray-500 mb-1">Priority</p>
+              <p className="text-sm text-gray-500 mb-1">Prioridad</p>
               {isEditing ? (
                 <select
                   className="border rounded px-2 py-1"
                   value={editedTask.priority}
                   onChange={e => setEditedTask({ ...editedTask, priority: e.target.value as TaskPriority })}
                 >
-                  <option value="highest">Highest</option>
-                  <option value="high">High</option>
-                  <option value="medium">Medium</option>
-                  <option value="low">Low</option>
-                  <option value="lowest">Lowest</option>
+                  <option value="highest">Máxima</option>
+                  <option value="high">Alta</option>
+                  <option value="medium">Media</option>
+                  <option value="low">Baja</option>
+                  <option value="lowest">Mínima</option>
                 </select>
               ) : (
                 <Badge className={getPriorityColor(task.priority)}>
-                  {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                  {getPriorityText(task.priority)}
                 </Badge>
               )}
             </div>
             <div>
-              <p className="text-sm text-gray-500 mb-1">Status</p>
+              <p className="text-sm text-gray-500 mb-1">Estado</p>
               {isEditing ? (
                 <select
                   className="border rounded px-2 py-1"
                   value={editedTask.status}
                   onChange={e => setEditedTask({ ...editedTask, status: e.target.value as TaskStatus })}
                 >
-                  <option value="todo">To Do</option>
-                  <option value="inProgress">In Progress</option>
-                  <option value="review">Review</option>
-                  <option value="done">Done</option>
-                  <option value="blocked">Blocked</option>
-                  <option value="cancelled">Cancelled</option>
+                  <option value="todo">Pendiente</option>
+                  <option value="inProgress">En progreso</option>
+                  <option value="review">En revisión</option>
+                  <option value="done">Completado</option>
+                  <option value="blocked">Bloqueado</option>
+                  <option value="cancelled">Cancelado</option>
                 </select>
               ) : (
                 <Badge className={getStatusColor(task.status)}>
-                  {task.status === "inProgress" ? "In Progress" : task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+                  {getStatusText(task.status)}
                 </Badge>
               )}
             </div>
             <div className="md:col-span-2">
-              <p className="text-sm text-gray-500 mb-1">Description</p>
+              <p className="text-sm text-gray-500 mb-1">Descripción</p>
               {isEditing ? (
                 <textarea
-                  className="font-medium text-[#3A3A3A] bg-gray-50 border border-gray-200 rounded px-3 py-2 w-full focus:outline-none focus:border-blue-400 transition"
+                  className="font-medium text-[#3A3A3A] bg-gray-50 border border-gray-200 rounded px-3 py-2 w-full focus:outline-none focus:border-blue-400 transition min-h-[100px]"
                   value={editedTask.description}
-                  onChange={e => setEditedTask({ ...editedTask, description: e.target.value })}
+                  onChange={e => setEditedTask({ ...editedTask, description: e.target.value, descripcion: e.target.value })}
                 />
               ) : (
-                <p className="font-medium text-[#3A3A3A] bg-gray-50 border border-gray-200 rounded px-3 py-2 w-full">{task.description || <span className="text-gray-400">No description</span>}</p>
+                <div className="font-medium text-[#3A3A3A] bg-gray-50 border border-gray-200 rounded px-3 py-2 w-full min-h-[100px] whitespace-pre-wrap">
+                  {editedTask.description || <span className="text-gray-400">Sin descripción</span>}
+                </div>
               )}
             </div>
             <div>
-              <p className="text-sm text-gray-500 mb-1">Assignee</p>
+              <p className="text-sm text-gray-500 mb-1">Asignado a</p>
               {isEditing ? (
                 <div>
                   {loadingUsers ? (
-                    <p className="text-sm text-gray-500">Loading users...</p>
+                    <p className="text-sm text-gray-500">Cargando usuarios...</p>
                   ) : (
                     <select
                       className="border rounded px-2 py-1 w-full"
@@ -296,7 +350,7 @@ export function TaskDetail({ task, onBack }: TaskDetailProps) {
                       onChange={(e) => handleUserSelect(e.target.value)}
                       disabled={saving}
                     >
-                      <option value="">Select a user</option>
+                      <option value="">Seleccionar usuario</option>
                       {users.map((user) => (
                         <option key={user.id} value={user.nombre}>
                           {user.nombre}
@@ -305,7 +359,7 @@ export function TaskDetail({ task, onBack }: TaskDetailProps) {
                     </select>
                   )}
                   {users.length === 0 && !loadingUsers && (
-                    <p className="text-sm text-red-500 mt-1">No users available</p>
+                    <p className="text-sm text-red-500 mt-1">No hay usuarios disponibles</p>
                   )}
                 </div>
               ) : (
@@ -322,17 +376,17 @@ export function TaskDetail({ task, onBack }: TaskDetailProps) {
                     <span className="text-sm">{editedTask.assignee.name}</span>
                 </div>
               ) : (
-                <span className="text-sm text-gray-500">Unassigned</span>
+                <span className="text-sm text-gray-500">Sin asignar</span>
                 )
               )}
             </div>
             <div>
-              <p className="text-sm text-gray-500 mb-1">Created</p>
-              <p className="text-sm text-gray-500">{task.created}</p>
+              <p className="text-sm text-gray-500 mb-1">Creado</p>
+              <p className="text-sm text-gray-500">{task.fechaCreacion || task.created}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500 mb-1">Updated</p>
-              <p className="text-sm text-gray-500">{task.updated}</p>
+              <p className="text-sm text-gray-500 mb-1">Actualizado</p>
+              <p className="text-sm text-gray-500">{task.fechaActualizacion || task.updated}</p>
             </div>
           </div>
 
@@ -340,14 +394,14 @@ export function TaskDetail({ task, onBack }: TaskDetailProps) {
             {isEditing ? (
               <>
                 <Button variant="outline" onClick={() => setIsEditing(false)} disabled={saving}>
-                  Cancel
+                  Cancelar
                 </Button>
                 <Button onClick={handleSave} disabled={saving}>
-                  {saving ? 'Saving...' : 'Save Changes'}
+                  {saving ? 'Guardando...' : 'Guardar cambios'}
                 </Button>
               </>
             ) : (
-              <Button onClick={() => setIsEditing(true)}>Edit Task</Button>
+              <Button onClick={() => setIsEditing(true)}>Editar tarea</Button>
             )}
           </div>
         </CardContent>
